@@ -1,0 +1,49 @@
+@import "tailwindcss";
+
+@theme inline {
+  --font-sans: "Vazirmatn Variable", "IBM Plex Sans", system-ui, sans-serif;
+  --font-tech: "IBM Plex Sans", "Vazirmatn Variable", system-ui, sans-serif;
+  --color-line: #e4e6ea;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  font-family: var(--font-sans);
+  background: #f5f6f7;
+  color: #0b0b0c;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Cryptocurrency symbols and numbers always stay LTR with the technical font */
+.num {
+  font-family: var(--font-tech);
+  direction: ltr;
+  unicode-bidi: isolate;
+  font-variant-numeric: tabular-nums;
+}
+
+.thin-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: #d4d7dd transparent;
+}
+.thin-scroll::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+.thin-scroll::-webkit-scrollbar-thumb {
+  background: #d4d7dd;
+  border-radius: 999px;
+}
+
+button,
+[role="button"] {
+  cursor: pointer;
+}
+
+input[type="search"]::-webkit-search-cancel-button {
+  cursor: pointer;
+}

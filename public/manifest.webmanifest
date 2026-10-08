@@ -1,0 +1,14 @@
+{
+  "name": "Shahab Radar - سیگنال ترید",
+  "short_name": "Shahab Radar",
+  "description": "رادار سیگنال LONG بازار ارزهای دیجیتال",
+  "start_url": "/",
+  "display": "standalone",
+  "dir": "rtl",
+  "lang": "fa",
+  "background_color": "#ffffff",
+  "theme_color": "#ffffff",
+  "icons": [
+    { "src": "/icon-192.png", "sizes": "any", "type": "image/png", "purpose": "any" }
+  ]
+}
