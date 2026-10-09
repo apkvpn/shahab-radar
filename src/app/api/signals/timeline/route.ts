@@ -13,7 +13,10 @@ export async function GET(req: Request) {
   try {
     if (!cached || Date.now() - cached.at > 10 * 60_000) {
       const report = await runBacktest("all");
-      const items = report.assets.flatMap((asset) => asset.trades.map((trade) => ({ ...trade, rank: asset.rank, name: asset.name, outcome: trade.exitReason })));
+      const from = new Date("2015-01-01T00:00:00.000Z").getTime();
+      const items = report.assets.flatMap((asset) => asset.trades
+        .filter((trade) => trade.entryTime >= from)
+        .map((trade) => ({ ...trade, rank: asset.rank, name: asset.name, outcome: trade.exitReason })));
       items.sort((a, b) => b.entryTime - a.entryTime);
       cached = { at: Date.now(), generatedAt: report.generatedAt, items };
     }
