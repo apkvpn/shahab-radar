@@ -269,8 +269,8 @@ export default function Radar() {
       <SignalTimeframePanel />
       <SignalStrip signals={signals} selectedId={sel.signal?.id ?? null} now={now} onOpen={openSignal} />
 
-      <main className="flex min-h-0 flex-1 flex-col gap-2.5 p-2.5">
-        <aside className="order-2 flex h-[380px] w-full shrink-0 flex-col overflow-hidden rounded-xl border border-line bg-white shadow-[0_1px_2px_rgba(16,24,40,0.05)]">
+      <main className="flex min-h-0 flex-1 flex-col gap-2.5 p-2.5 lg:grid lg:grid-cols-[minmax(0,1fr)_360px] lg:overflow-hidden">
+        <aside className="order-2 flex h-[380px] w-full shrink-0 flex-col overflow-hidden rounded-xl border border-line bg-white shadow-[0_1px_2px_rgba(16,24,40,0.05)] lg:order-1 lg:h-full">
           <div className="space-y-2.5 border-b border-line bg-[#fbfcfd] p-3">
             <div className="flex items-center justify-between">
               <h2 className="text-[13px] font-extrabold text-[#1f2328]">جستجو و انتخاب ارز</h2>
@@ -315,7 +315,7 @@ export default function Radar() {
 
         <section
           ref={chartAnchor}
-          className="order-1 h-[58dvh] min-h-[360px] w-full scroll-mt-2"
+          className="order-1 h-[58dvh] min-h-[360px] w-full scroll-mt-2 lg:order-2 lg:h-full"
         >
           <ChartPanel
             header={header}
