@@ -47,15 +47,6 @@ function precisionFor(p: number): number {
 const TAKE_PROFIT = 0.25;
 const STOP_LOSS = 0.25;
 
-interface NewsItem {
-  id: string;
-  title: string;
-  summary: string;
-  url: string;
-  source: string;
-  publishedAt: number;
-  translated: boolean;
-}
 
 export interface ChartHeader {
   symbol: string;
@@ -108,37 +99,14 @@ export default function ChartPanel({
   const [fs, setFs] = useState(false);
   const [pseudoFs, setPseudoFs] = useState(false);
   const [detailsOpen, setDetailsOpen] = useState(true);
-  const [newsOpen, setNewsOpen] = useState(false);
-  const [newsLoading, setNewsLoading] = useState(false);
-  const [newsError, setNewsError] = useState(false);
-  const [newsItems, setNewsItems] = useState<NewsItem[]>([]);
-  const [newsPage, setNewsPage] = useState(1);
-  const [newsHasMore, setNewsHasMore] = useState(false);
   const detail = signal && signal.symbol === symbol && signal.timeframe === tf ? signal : null;
 
   useEffect(() => {
     signalRef.current = signal;
     setDetailsOpen(true);
-    setNewsOpen(false);
   }, [signal, nonce]);
 
-  const loadNews = useCallback(async (page = 1) => {
-    if (!detail) return;
-    setNewsLoading(true);
-    setNewsError(false);
-    try {
-      const res = await fetch(`/api/news/${encodeURIComponent(detail.symbol)}?name=${encodeURIComponent(detail.name)}&page=${page}`, { cache: "no-store" });
-      const body = await res.json() as { items?: NewsItem[]; hasMore?: boolean };
-      if (!res.ok) throw new Error("news unavailable");
-      setNewsItems((prev) => page === 1 ? (body.items ?? []) : [...prev, ...(body.items ?? [])]);
-      setNewsPage(page);
-      setNewsHasMore(!!body.hasMore);
-    } catch {
-      setNewsError(true);
-    } finally {
-      setNewsLoading(false);
-    }
-  }, [detail]);
+
 
   // ---- create chart once ---------------------------------------------------------------
   useEffect(() => {
@@ -147,16 +115,16 @@ export default function ChartPanel({
     const chart = createChart(el, {
       autoSize: true,
       layout: {
-        background: { type: ColorType.Solid, color: "#ffffff" },
-        textColor: "#52525b",
+        background: { type: ColorType.Solid, color: "#0b0f14" },
+        textColor: "#94a3b8",
         fontFamily: "IBM Plex Sans, sans-serif",
         fontSize: 11,
         attributionLogo: true,
       },
-      grid: { vertLines: { color: "#f3f4f6" }, horzLines: { color: "#f3f4f6" } },
-      rightPriceScale: { borderColor: "#e5e7eb", scaleMargins: { top: 0.08, bottom: 0.1 } },
+      grid: { vertLines: { color: "#18212b" }, horzLines: { color: "#18212b" } },
+      rightPriceScale: { borderColor: "#334155", scaleMargins: { top: 0.08, bottom: 0.1 } },
       timeScale: {
-        borderColor: "#e5e7eb",
+        borderColor: "#334155",
         timeVisible: true,
         secondsVisible: false,
         rightOffset: 6,
@@ -389,11 +357,11 @@ export default function ChartPanel({
   return (
     <div
       ref={wrapRef}
-      className={`flex min-h-0 flex-col overflow-hidden bg-white ${
-        pseudoFs ? "fixed inset-0 z-50" : "h-full rounded-xl border border-line shadow-[0_1px_2px_rgba(16,24,40,0.05)]"
+      className={`flex min-h-0 flex-col overflow-hidden bg-[#0b0f14] ${
+        pseudoFs ? "fixed inset-0 z-50" : "h-full rounded-xl border border-slate-700 shadow-[0_1px_2px_rgba(0,0,0,0.25)]"
       }`}
     >
-      <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 border-b border-line px-3 py-2">
+      <div className="flex flex-wrap items-center gap-x-2 gap-y-1 border-b border-slate-700 bg-[#101720] px-2.5 py-1.5 text-white">
         <div className="flex items-center gap-2">
           <select
             aria-label="انتخاب ارز"
@@ -480,16 +448,7 @@ export default function ChartPanel({
             </div>
             <div className="num mt-1 text-[20px] font-bold text-slate-800">{fmtPrice(detail.price)}</div>
             <div className="num text-[12px] text-slate-500">{fmtDateTime(detail.signalTime)}</div>
-            <button
-              onClick={() => {
-                setNewsOpen(true);
-                if (!newsItems.length) void loadNews(1);
-              }}
-              className="mt-3 flex w-full items-center justify-center gap-2 rounded-lg bg-slate-900 px-3 py-2 text-[13px] font-bold text-white shadow-sm transition hover:bg-slate-700"
-            >
-              <span className="inline-block h-2 w-2 animate-pulse rounded-full bg-lime-400" />
-              Live News <span className="font-normal text-slate-300">· اخبار زنده</span>
-            </button>
+
             <dl className="mt-3 space-y-1.5 border-t border-emerald-100 pt-3">
               <div className="flex items-center justify-between rounded-lg bg-emerald-50 px-2.5 py-1.5">
                 <dt className="font-semibold text-emerald-700">قیمت ورود واقعی</dt>
@@ -508,42 +467,6 @@ export default function ChartPanel({
                 <dd className="num font-bold text-slate-700">#{detail.rank}</dd>
               </div>
             </dl>
-          </div>
-        )}
-        {newsOpen && detail && (
-          <div className="fixed inset-0 z-[70] grid place-items-center bg-slate-950/45 p-4" dir="rtl" onMouseDown={(e) => { if (e.target === e.currentTarget) setNewsOpen(false); }}>
-            <section className="flex max-h-[88vh] w-full max-w-2xl flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl">
-              <header className="flex items-center justify-between border-b border-slate-100 bg-gradient-to-l from-slate-950 to-slate-800 px-5 py-4 text-white">
-                <div>
-                  <h2 className="text-lg font-extrabold">اخبار زنده {detail.symbol}</h2>
-                  <p className="mt-0.5 text-xs text-slate-300">جدیدترین اخبار بازار، مرتب‌شده از جدید به قدیم</p>
-                </div>
-                <button onClick={() => setNewsOpen(false)} className="rounded-lg px-2 py-1 text-2xl leading-none text-slate-300 hover:bg-white/10 hover:text-white" aria-label="بستن اخبار">×</button>
-              </header>
-              <div className="min-h-0 overflow-y-auto p-4">
-                {newsLoading && !newsItems.length && <div className="py-12 text-center text-sm text-slate-500">در حال دریافت و ترجمهٔ اخبار…</div>}
-                {newsError && !newsItems.length && <div className="py-12 text-center text-sm text-rose-600">دریافت اخبار ممکن نشد. لطفاً دوباره تلاش کنید.</div>}
-                {!newsLoading && !newsError && !newsItems.length && <div className="py-12 text-center text-sm text-slate-500">خبر جدیدی برای این ارز پیدا نشد.</div>}
-                <div className="space-y-3">
-                  {newsItems.map((item) => (
-                    <article key={item.id} className="rounded-xl border border-slate-200 bg-slate-50 p-3 transition hover:border-lime-300 hover:bg-lime-50/40">
-                      <div className="flex items-center justify-between gap-3 text-[11px] text-slate-500">
-                        <span>{item.source}</span>
-                        <time>{new Date(item.publishedAt).toLocaleString("fa-IR", { dateStyle: "medium", timeStyle: "short" })}</time>
-                      </div>
-                      <h3 className="mt-1.5 text-[14px] font-extrabold leading-6 text-slate-900">{item.title}</h3>
-                      {item.summary && <p className="mt-1 text-[12px] leading-5 text-slate-600">{item.summary}</p>}
-                      <a href={item.url} target="_blank" rel="noreferrer" className="mt-2 inline-block text-[11px] font-bold text-sky-700 hover:text-sky-900">مشاهدهٔ منبع خبر ←</a>
-                    </article>
-                  ))}
-                </div>
-                {newsHasMore && (
-                  <button onClick={() => void loadNews(newsPage + 1)} disabled={newsLoading} className="mt-4 w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm font-bold text-slate-700 hover:bg-slate-50 disabled:opacity-50">
-                    {newsLoading ? "در حال بارگذاری…" : "نمایش بیشتر"}
-                  </button>
-                )}
-              </div>
-            </section>
           </div>
         )}
       </div>

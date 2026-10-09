@@ -266,7 +266,7 @@ export default function Radar() {
         </div>
       </header>
 
-      <SignalTimeframePanel onOpen={openSignal} />
+      <SignalTimeframePanel />
       <SignalStrip signals={signals} selectedId={sel.signal?.id ?? null} now={now} onOpen={openSignal} />
 
       <main className="flex min-h-0 flex-1 flex-col gap-2.5 p-2.5">
