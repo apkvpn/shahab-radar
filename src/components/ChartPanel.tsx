@@ -115,16 +115,16 @@ export default function ChartPanel({
     const chart = createChart(el, {
       autoSize: true,
       layout: {
-        background: { type: ColorType.Solid, color: "#0b0f14" },
-        textColor: "#94a3b8",
+        background: { type: ColorType.Solid, color: "#ffffff" },
+        textColor: "#131722",
         fontFamily: "IBM Plex Sans, sans-serif",
         fontSize: 11,
         attributionLogo: true,
       },
-      grid: { vertLines: { color: "#18212b" }, horzLines: { color: "#18212b" } },
-      rightPriceScale: { borderColor: "#334155", scaleMargins: { top: 0.08, bottom: 0.1 } },
+      grid: { vertLines: { color: "#e6e6e6" }, horzLines: { color: "#e6e6e6" } },
+      rightPriceScale: { borderColor: "#d1d4dc", scaleMargins: { top: 0.08, bottom: 0.1 } },
       timeScale: {
-        borderColor: "#334155",
+        borderColor: "#d1d4dc",
         timeVisible: true,
         secondsVisible: false,
         rightOffset: 6,
@@ -142,11 +142,13 @@ export default function ChartPanel({
     });
     const zones = new ZonesPrimitive();
     const candle = chart.addSeries(CandlestickSeries, {
-      upColor: "#16a34a",
-      downColor: "#ef4444",
-      borderVisible: false,
-      wickUpColor: "#16a34a",
-      wickDownColor: "#ef4444",
+      upColor: "#26a69a",
+      downColor: "#ef5350",
+      borderVisible: true,
+      borderUpColor: "#26a69a",
+      borderDownColor: "#ef5350",
+      wickUpColor: "#26a69a",
+      wickDownColor: "#ef5350",
       priceLineVisible: true,
     });
     candle.attachPrimitive(zones);
@@ -357,11 +359,11 @@ export default function ChartPanel({
   return (
     <div
       ref={wrapRef}
-      className={`flex min-h-0 flex-col overflow-hidden bg-[#0b0f14] ${
+      className={`flex min-h-0 flex-col overflow-hidden bg-white ${
         pseudoFs ? "fixed inset-0 z-50" : "h-full rounded-xl border border-slate-700 shadow-[0_1px_2px_rgba(0,0,0,0.25)]"
       }`}
     >
-      <div className="flex flex-wrap items-center gap-x-2 gap-y-1 border-b border-slate-700 bg-[#101720] px-2.5 py-1.5 text-white">
+      <div className="flex flex-wrap items-center gap-x-2 gap-y-1 border-b border-[#e6e6e6] bg-white px-2.5 py-1.5 text-[#131722]">
         <div className="flex items-center gap-2">
           <select
             aria-label="انتخاب ارز"
