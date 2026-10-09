@@ -23,6 +23,19 @@ function parseRss(xml: string): NewsItem[] {
     return { id: `${url || "news"}-${i}`, title: tag(body, "title"), summary: tag(body, "description"), url, source: tag(body, "source") || "Google News", publishedAt: Number.isFinite(published) ? published : Date.now(), translated: false };
   }).filter((item) => item.title && item.url).sort((a, b) => b.publishedAt - a.publishedAt);
 }
+async function enrichSummary(item: NewsItem): Promise<NewsItem> {
+  if (item.summary.length >= 280) return item;
+  try {
+    const res = await fetch(item.url, { headers: { "User-Agent": "Mozilla/5.0 ShahabRadar/1.0" }, redirect: "follow", signal: AbortSignal.timeout(3_000) });
+    if (!res.ok) return item;
+    const html = await res.text();
+    const meta = html.match(/<meta[^>]+(?:name|property)=["'](?:description|og:description)["'][^>]+content=["']([^"']+)["']/i)?.[1] || html.match(/<meta[^>]+content=["']([^"']+)["'][^>]+(?:name|property)=["'](?:description|og:description)["']/i)?.[1] || "";
+    const paragraphs = [...html.matchAll(/<p[^>]*>([\s\S]*?)<\/p>/gi)].map((m) => decode(m[1])).filter((x) => x.length > 40).slice(0, 8).join(" ");
+    const expanded = decode(meta || paragraphs).slice(0, 3500);
+    return expanded.length > item.summary.length ? { ...item, summary: expanded } : item;
+  } catch { return item; }
+}
+
 async function translateText(value: string): Promise<string> {
   if (!value) return "";
   try {
@@ -33,7 +46,8 @@ async function translateText(value: string): Promise<string> {
   } catch { return ""; }
 }
 async function translate(items: NewsItem[]): Promise<NewsItem[]> {
-  return Promise.all(items.slice(0, 6).map(async (item) => {
+  return Promise.all(items.slice(0, 6).map(async (raw) => {
+    const item = await enrichSummary(raw);
     const [title, summary] = await Promise.all([translateText(item.title), translateText(item.summary)]);
     return { ...item, title: title || item.title, summary: summary || item.summary, translated: Boolean(title || summary) };
   }));

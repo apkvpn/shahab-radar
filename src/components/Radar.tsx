@@ -315,7 +315,7 @@ export default function Radar() {
 
         <section
           ref={chartAnchor}
-          className="order-1 h-[68dvh] min-h-[420px] w-full scroll-mt-2"
+          className="order-1 h-[58dvh] min-h-[360px] w-full scroll-mt-2"
         >
           <ChartPanel
             header={header}
