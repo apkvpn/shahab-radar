@@ -14,6 +14,6 @@ export async function GET() {
     source: st.universeSource,
     excludedStable: st.excludedStable,
     unavailable: st.unavailable,
-    items: st.universe.slice(0, 50).map((m) => ({ rank: m.rank, symbol: m.symbol, name: m.name, marketCap: m.marketCap })),
+    items: st.universe.slice(0, 100).map((m) => ({ rank: m.rank, symbol: m.symbol, name: m.name, marketCap: m.marketCap })),
   });
 }

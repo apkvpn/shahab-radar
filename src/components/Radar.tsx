@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { activeWindowMs, type MarketMetaPublic, type PublicSignal, type Timeframe } from "@/lib/shared";
+import { activeWindowMs, type ChartTradeFocus, type MarketMetaPublic, type PublicSignal, type Timeframe } from "@/lib/shared";
 import { audioRunning, playAlert, unlockAudio } from "@/lib/audio";
 import {
   enableNotifications,
@@ -58,6 +58,7 @@ export default function Radar() {
 
   const [markets, setMarkets] = useState<MarketMetaPublic[]>([]);
   const [sel, setSel] = useState<Selection>({ symbol: "BTC", tf: "1d", signal: null, nonce: 0 });
+  const [tradeFocus, setTradeFocus] = useState<ChartTradeFocus | null>(null);
   const [search, setSearch] = useState("");
   const [onlyLong, setOnlyLong] = useState(false);
   const [panel, setPanel] = useState<null | "controls" | "history" | "report">(null);
@@ -89,14 +90,14 @@ export default function Radar() {
     if (snapshot) setNow(Date.now());
   }, [snapshot]);
 
-  // ---- monitored universe (re-fetched when the Top-50 changes) ---------------------------
+  // ---- monitored universe (re-fetched when the Top-100 changes) --------------------------
   const version = snapshot?.version ?? 0;
   useEffect(() => {
     let stop = false;
     let t: ReturnType<typeof setTimeout> | undefined;
     const run = async () => {
       try {
-        const r = await fetch("/api/markets/top50", { cache: "no-store" });
+        const r = await fetch("/api/markets/top100", { cache: "no-store" });
         if (r.ok) {
           const d = (await r.json()) as { items: MarketMetaPublic[] };
           if (!stop && d.items?.length) {
@@ -162,12 +163,22 @@ export default function Radar() {
   };
 
   const openSignal = useCallback((s: PublicSignal) => {
+    setTradeFocus(null);
     setSel((p) => ({ symbol: s.symbol, tf: s.timeframe, signal: s, nonce: p.nonce + 1 }));
     if (window.innerWidth < 1024) chartAnchor.current?.scrollIntoView({ behavior: "smooth", block: "start" });
   }, []);
 
   const selectMarket = useCallback((symbol: string, tf?: Timeframe) => {
+    setTradeFocus(null);
     setSel((p) => ({ symbol, tf: tf ?? p.tf, signal: null, nonce: p.nonce }));
+    if (window.innerWidth < 1024) chartAnchor.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, []);
+
+  const openTrade = useCallback((trade: ChartTradeFocus) => {
+    setTradeFocus(trade);
+    const symbol = trade.symbol;
+    setSel((p) => ({ symbol, tf: "1d", signal: null, nonce: p.nonce + 1 }));
+    setPanel(null);
     if (window.innerWidth < 1024) chartAnchor.current?.scrollIntoView({ behavior: "smooth", block: "start" });
   }, []);
 
@@ -266,7 +277,7 @@ export default function Radar() {
         </div>
       </header>
 
-      <SignalTimeframePanel />
+      <SignalTimeframePanel onOpenTrade={openTrade} />
       <SignalStrip signals={signals} selectedId={sel.signal?.id ?? null} now={now} onOpen={openSignal} />
 
       <main className="flex min-h-0 flex-1 flex-col gap-2.5 p-2.5 lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(260px,31vw)] lg:items-start lg:overflow-hidden">
@@ -322,9 +333,11 @@ export default function Radar() {
             symbols={symbols}
             tf={sel.tf}
             signal={sel.signal}
+            tradeFocus={tradeFocus}
             nonce={sel.nonce}
             liveSignals={signals}
             onTf={(tf) => {
+              setTradeFocus(null);
               setSel((p) => ({ ...p, tf, signal: p.signal && p.signal.timeframe === tf ? p.signal : null }));
               scrollToChart();
             }}
@@ -347,7 +360,7 @@ export default function Radar() {
         />
       )}
       {panel === "history" && <HistoryPanel symbols={symbols} onOpen={openSignal} onClose={() => setPanel(null)} />}
-      {panel === "report" && <StatsReportPanel symbols={symbols} onClose={() => setPanel(null)} />}
+      {panel === "report" && <StatsReportPanel symbols={symbols} onClose={() => setPanel(null)} onOpenTrade={(symbol, trade) => openTrade({ ...trade, symbol })} />}
     </div>
   );
 }

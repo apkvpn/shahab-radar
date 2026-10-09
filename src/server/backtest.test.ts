@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { summarizeTrades, type TradeResult } from "./backtest";
+import { findFirstTouch, summarizeTrades, tradeLevels, type TradeResult } from "./backtest";
 
 const trade = (id: string, entryTime: number, win: boolean): TradeResult => ({
   id,
@@ -21,14 +21,40 @@ const trades = [
   ...Array.from({ length: 88 }, (_, i) => trade(`win-${i}`, i * 2, true)),
   ...Array.from({ length: 7 }, (_, i) => trade(`loss-${i}`, (176 + i) * 2, false)),
 ];
+
+const levels = tradeLevels(100);
+assert.equal(levels.takeProfit, 125);
+assert.equal(levels.stopLoss, 75);
+const candle = (t: number, h: number, l: number) => ({ t, h, l, o: 100, c: 100, v: 1, x: true });
+assert.equal(findFirstTouch([candle(1, 110, 90)], 125, 75), null);
+assert.equal(findFirstTouch([candle(1, 115, 80)], 125, 75), null);
+assert.equal(findFirstTouch([candle(1, 110, 75)], 125, 75)?.reason, "STOP_LOSS_25");
+assert.equal(findFirstTouch([candle(1, 125, 90)], 125, 75)?.reason, "TAKE_PROFIT_25");
+assert.equal(findFirstTouch([candle(1, 130, 70)], 125, 75)?.reason, "AMBIGUOUS");
+assert.equal(findFirstTouch([candle(2, 110, 90), candle(3, 125, 80)], 125, 75)?.reason, "TAKE_PROFIT_25");
+
+const ambiguousTrade: TradeResult = {
+  ...trade("ambiguous", 300, true),
+  exitTime: null,
+  exitPrice: null,
+  exitReason: "AMBIGUOUS",
+  grossPct: null,
+  netPct: null,
+};
+const mixed = summarizeTrades([trade("won", 400, true), trade("lost", 500, false), ambiguousTrade]);
+assert.equal(mixed.takeProfits, 1);
+assert.equal(mixed.stopLosses, 1);
+assert.equal(mixed.ambiguous, 1);
+assert.equal(mixed.winRate, 50);
 const result = summarizeTrades(trades, 100, 1 / 95);
 
 assert.equal(result.tradeCount, 95);
 assert.equal(result.closed, 95);
 assert.equal(result.takeProfits, 88);
 assert.equal(result.stopLosses, 7);
+assert.equal(result.winRate, (88 / 95) * 100);
 assert.equal(result.open, 0);
-assert.equal(result.unknown, 0);
+assert.equal(result.ambiguous, 0);
 assert.equal(result.grossProfitPct, 2200);
 assert.equal(result.grossLossPct, -175);
 assert.equal(result.grossPnlPct, 2025);

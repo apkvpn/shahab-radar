@@ -7,7 +7,7 @@ export const TF_MS: Record<Timeframe, number> = {
   "1d": 86_400_000,
 };
 
-export const TOP_N = 50;
+export const TOP_N = 100;
 export const SCAN_INTERVAL_SEC = 5;
 
 export function isTimeframe(v: string): v is Timeframe {
@@ -39,6 +39,18 @@ export interface PublicSignal {
   source: string;
   confirmation: string;
   createdAt: number;
+}
+
+export interface ChartTradeFocus {
+  id: string;
+  symbol: string;
+  entryTime: number;
+  entryPrice: number;
+  takeProfit: number;
+  stopLoss: number;
+  exitTime: number | null;
+  exitPrice: number | null;
+  exitReason: "TAKE_PROFIT_25" | "STOP_LOSS_25" | "OPEN" | "AMBIGUOUS";
 }
 
 export interface MarketMetaPublic {

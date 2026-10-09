@@ -75,9 +75,11 @@ function parseRestKline(r: unknown[], now: number): Candle | null {
   return { t, o, h, l, c, v: Number.isFinite(v) ? v : 0, x: closeTime + 300 < now };
 }
 
+export type KlineInterval = Timeframe | "1h" | "1m";
+
 export async function fetchKlines(
   pair: string,
-  tf: Timeframe,
+  tf: KlineInterval,
   limit: number,
   startTime?: number,
   endTime?: number,

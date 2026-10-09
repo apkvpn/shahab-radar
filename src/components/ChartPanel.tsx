@@ -5,17 +5,19 @@ import {
   CandlestickSeries,
   ColorType,
   CrosshairMode,
+  LineStyle,
   LineSeries,
   TickMarkType,
   createChart,
   createSeriesMarkers,
   type IChartApi,
+  type IPriceLine,
   type ISeriesApi,
   type ISeriesMarkersPluginApi,
   type Time,
   type UTCTimestamp,
 } from "lightweight-charts";
-import { TF_MS, TIMEFRAMES, type ChartMarker, type ChartPayload, type PublicSignal, type Timeframe } from "@/lib/shared";
+import { TF_MS, TIMEFRAMES, type ChartMarker, type ChartPayload, type ChartTradeFocus, type PublicSignal, type Timeframe } from "@/lib/shared";
 import { fmtDateTime, fmtNum, fmtPct, fmtPrice } from "@/lib/format";
 import { ZonesPrimitive, type ZonePoint } from "./chart/zones";
 
@@ -62,6 +64,7 @@ export default function ChartPanel({
   symbols,
   tf,
   signal,
+  tradeFocus,
   nonce,
   liveSignals,
   onTf,
@@ -71,6 +74,7 @@ export default function ChartPanel({
   symbols: string[];
   tf: Timeframe;
   signal: PublicSignal | null;
+  tradeFocus: ChartTradeFocus | null;
   nonce: number;
   liveSignals: PublicSignal[];
   onTf: (tf: Timeframe) => void;
@@ -86,6 +90,7 @@ export default function ChartPanel({
   const resRef = useRef<ISeriesApi<"Line"> | null>(null);
   const zonesRef = useRef<ZonesPrimitive | null>(null);
   const markersApi = useRef<ISeriesMarkersPluginApi<Time> | null>(null);
+  const tradeLinesRef = useRef<IPriceLine[]>([]);
   const timesRef = useRef<Set<number>>(new Set());
   const zoneData = useRef<ZonePoint[]>([]);
   const lastTime = useRef(0);
@@ -100,6 +105,7 @@ export default function ChartPanel({
   const [pseudoFs, setPseudoFs] = useState(false);
   const [detailsOpen, setDetailsOpen] = useState(true);
   const detail = signal && signal.symbol === symbol && signal.timeframe === tf ? signal : null;
+  const activeTrade = tradeFocus && tradeFocus.symbol === symbol && tf === "1d" ? tradeFocus : null;
 
   useEffect(() => {
     signalRef.current = signal;
@@ -170,7 +176,7 @@ export default function ChartPanel({
   }, []);
 
   // ---- apply a full payload -------------------------------------------------------------
-  const applyPayload = useCallback((p: ChartPayload, focus: PublicSignal | null) => {
+  const applyPayload = useCallback((p: ChartPayload, focusTime: number | null, exitTime: number | null) => {
     const chart = chartRef.current;
     const candle = candleRef.current;
     if (!chart || !candle || !p.candles.length) return;
@@ -199,9 +205,12 @@ export default function ChartPanel({
     const width = hostRef.current?.clientWidth ?? 800;
     const visible = Math.min(170, Math.max(40, Math.round(width / 7)));
     const ts = chart.timeScale();
-    const idx = focus ? cs.findIndex((c) => c[0] * 1000 === focus.candleTime) : -1;
+    const idx = focusTime == null ? -1 : cs.findIndex((c) => c[0] * 1000 === focusTime);
+    const exitIdx = exitTime == null ? -1 : cs.findIndex((c) => c[0] === Math.floor(exitTime / TF_MS["1d"]) * 86_400);
     if (idx >= 0) {
-      ts.setVisibleLogicalRange({ from: idx - Math.round(visible * 0.6), to: Math.min(n + 6, idx + Math.round(visible * 0.4)) });
+      const from = exitIdx >= idx ? idx - 12 : idx - Math.round(visible * 0.6);
+      const to = exitIdx >= idx ? exitIdx + 12 : idx + Math.round(visible * 0.4);
+      ts.setVisibleLogicalRange({ from: Math.max(0, from), to: Math.min(n + 6, to) });
     } else {
       ts.setVisibleLogicalRange({ from: n - visible, to: n + 8 });
     }
@@ -213,14 +222,15 @@ export default function ChartPanel({
     setLoading(true);
     setError(false);
     const f = signalRef.current;
-    const q = f && f.symbol === symbol && f.timeframe === tf ? `?focus=${f.candleTime}` : "";
+    const focusTime = activeTrade?.entryTime ?? (f && f.symbol === symbol && f.timeframe === tf ? f.candleTime : null);
+    const q = focusTime == null ? "" : `?focus=${focusTime}`;
     fetch(`/api/markets/${symbol}/${tf}${q}`, { cache: "no-store", signal: ac.signal })
       .then((r) => {
         if (!r.ok) throw new Error(String(r.status));
         return r.json() as Promise<ChartPayload>;
       })
       .then((p) => {
-        applyPayload(p, q ? f : null);
+        applyPayload(p, focusTime, activeTrade?.exitTime ?? null);
         setData(p);
         setMarkers(p.markers);
         setLoading(false);
@@ -231,7 +241,33 @@ export default function ChartPanel({
         setLoading(false);
       });
     return () => ac.abort();
-  }, [symbol, tf, nonce, reload, applyPayload]);
+  }, [symbol, tf, nonce, reload, activeTrade?.entryTime, activeTrade?.exitTime, applyPayload]);
+
+  useEffect(() => {
+    const candle = candleRef.current;
+    if (!candle) return;
+    for (const line of tradeLinesRef.current) candle.removePriceLine(line);
+    tradeLinesRef.current = [];
+    if (!activeTrade) return;
+    const levels = [
+      { price: activeTrade.entryPrice, color: "#0f766e", title: "ENTRY" },
+      { price: activeTrade.takeProfit, color: "#0284c7", title: "TP +25%" },
+      { price: activeTrade.stopLoss, color: "#e11d48", title: "SL −25%" },
+      ...(activeTrade.exitPrice == null ? [] : [{ price: activeTrade.exitPrice, color: activeTrade.exitReason === "TAKE_PROFIT_25" ? "#16a34a" : "#dc2626", title: "EXIT" }]),
+    ];
+    tradeLinesRef.current = levels.map((level) => candle.createPriceLine({
+      price: level.price,
+      color: level.color,
+      lineWidth: 1,
+      lineStyle: LineStyle.Dashed,
+      axisLabelVisible: true,
+      title: level.title,
+    }));
+    return () => {
+      for (const line of tradeLinesRef.current) candle.removePriceLine(line);
+      tradeLinesRef.current = [];
+    };
+  }, [activeTrade, data, symbol, tf]);
 
   // full refresh when returning to a hidden tab (live poll only covers the last candles)
   useEffect(() => {
@@ -315,8 +351,10 @@ export default function ChartPanel({
     const api = markersApi.current;
     if (!api) return;
     const sel = signal?.id;
+    const entryT = activeTrade ? Math.floor(activeTrade.entryTime / 1000) : null;
+    const exitT = activeTrade?.exitTime == null ? null : Math.floor(activeTrade.exitTime / TF_MS["1d"]) * 86_400;
     const list = markers
-      .filter((m) => timesRef.current.has(m.t))
+      .filter((m) => timesRef.current.has(m.t) && m.t !== entryT)
       .sort((a, b) => a.t - b.t)
       .map((m) => ({
         time: m.t as UTCTimestamp,
@@ -326,8 +364,21 @@ export default function ChartPanel({
         size: m.id === sel ? 2 : 1,
         text: "LONG",
       }));
-    api.setMarkers(list);
-  }, [markers, signal, data]);
+    const tradeMarkers: { time: UTCTimestamp; position: "aboveBar" | "belowBar"; shape: "circle"; color: string; size: number; text: string }[] = activeTrade && entryT != null && timesRef.current.has(entryT)
+      ? [{ time: entryT as UTCTimestamp, position: "belowBar", shape: "circle", color: "#0f766e", size: 2, text: "ENTRY" }]
+      : [];
+    if (activeTrade && exitT != null && exitT !== entryT && timesRef.current.has(exitT)) {
+      tradeMarkers.push({
+        time: exitT as UTCTimestamp,
+        position: "aboveBar",
+        shape: "circle",
+        color: activeTrade.exitReason === "TAKE_PROFIT_25" ? "#16a34a" : activeTrade.exitReason === "STOP_LOSS_25" ? "#dc2626" : "#d97706",
+        size: 2,
+        text: activeTrade.exitReason === "TAKE_PROFIT_25" ? "TP HIT" : activeTrade.exitReason === "STOP_LOSS_25" ? "SL HIT" : activeTrade.exitReason === "AMBIGUOUS" ? "AMBIGUOUS" : "OPEN",
+      });
+    }
+    api.setMarkers([...list, ...tradeMarkers]);
+  }, [markers, signal, data, activeTrade]);
 
   // ---- full screen -----------------------------------------------------------------------
   useEffect(() => {
@@ -453,8 +504,8 @@ export default function ChartPanel({
 
             <dl className="mt-3 space-y-1.5 border-t border-emerald-100 pt-3">
               <div className="flex items-center justify-between rounded-lg bg-emerald-50 px-2.5 py-1.5">
-                <dt className="font-semibold text-emerald-700">قیمت ورود واقعی</dt>
-                <dd className="num text-[15px] font-bold text-emerald-800">{fmtNum(detail.support)}</dd>
+                <dt className="font-semibold text-emerald-700">قیمت ورود سیگنال</dt>
+                <dd className="num text-[15px] font-bold text-emerald-800">{fmtNum(detail.price)}</dd>
               </div>
               <div className="flex items-center justify-between rounded-lg bg-sky-50 px-2.5 py-1.5">
                 <dt className="font-semibold text-sky-700">حد سود</dt>
@@ -468,6 +519,23 @@ export default function ChartPanel({
                 <dt className="font-semibold">رتبه</dt>
                 <dd className="num font-bold text-slate-700">#{detail.rank}</dd>
               </div>
+            </dl>
+          </div>
+        )}
+        {activeTrade && !error && (
+          <div dir="rtl" className="absolute left-3 top-3 z-10 w-[290px] rounded-2xl border border-sky-200 bg-white/95 p-3 text-[12px] shadow-xl backdrop-blur-sm">
+            <div className="flex items-center justify-between gap-2">
+              <strong className="num text-[15px]">{activeTrade.symbol} · معامله Daily</strong>
+              <span className={`rounded-md px-2 py-0.5 font-bold ${activeTrade.exitReason === "TAKE_PROFIT_25" ? "bg-emerald-100 text-emerald-800" : activeTrade.exitReason === "STOP_LOSS_25" ? "bg-rose-100 text-rose-800" : activeTrade.exitReason === "AMBIGUOUS" ? "bg-amber-100 text-amber-800" : "bg-slate-100 text-slate-700"}`}>
+                {activeTrade.exitReason === "TAKE_PROFIT_25" ? "تارگت خورده" : activeTrade.exitReason === "STOP_LOSS_25" ? "استاپ خورده" : activeTrade.exitReason === "AMBIGUOUS" ? "ترتیب مبهم" : "باز"}
+              </span>
+            </div>
+            <div className="num mt-1 text-slate-500">ورود {fmtDateTime(activeTrade.entryTime)}{activeTrade.exitTime == null ? "" : ` · خروج ${fmtDateTime(activeTrade.exitTime)}`}</div>
+            <dl className="mt-2 grid grid-cols-2 gap-x-3 gap-y-1 border-t border-slate-100 pt-2">
+              <dt>ورود</dt><dd className="num text-end font-bold">{fmtNum(activeTrade.entryPrice)}</dd>
+              <dt className="text-sky-700">TP +25%</dt><dd className="num text-end font-bold text-sky-700">{fmtNum(activeTrade.takeProfit)}</dd>
+              <dt className="text-rose-700">SL −25%</dt><dd className="num text-end font-bold text-rose-700">{fmtNum(activeTrade.stopLoss)}</dd>
+              {activeTrade.exitPrice != null && <><dt>قیمت خروج</dt><dd className="num text-end font-bold">{fmtNum(activeTrade.exitPrice)}</dd></>}
             </dl>
           </div>
         )}

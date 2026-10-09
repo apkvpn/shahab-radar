@@ -20,7 +20,7 @@ export async function GET(req: Request) {
       items.sort((a, b) => b.entryTime - a.entryTime);
       cached = { at: Date.now(), generatedAt: report.generatedAt, items };
     }
-    return json({ generatedAt: cached.generatedAt, from: new Date("2015-01-01T00:00:00.000Z").getTime(), markets: 50, items: cached.items.slice(0, limit) });
+    return json({ generatedAt: cached.generatedAt, from: new Date("2015-01-01T00:00:00.000Z").getTime(), markets: 100, items: cached.items.slice(0, limit) });
   } catch {
     return json({ error: "historical_signals_unavailable" }, 503);
   }

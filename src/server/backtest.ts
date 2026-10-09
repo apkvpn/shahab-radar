@@ -8,8 +8,27 @@ export const STOP_LOSS = 0.25;
 export const FEE_RATE = 0.001;
 export const SLIPPAGE_RATE = 0.0005;
 const MAX_BARS = 5000;
+const DAY_MS = 86_400_000;
 
-export type ExitReason = "TAKE_PROFIT_25" | "STOP_LOSS_25" | "OPEN" | "UNKNOWN";
+export type ExitReason = "TAKE_PROFIT_25" | "STOP_LOSS_25" | "OPEN" | "AMBIGUOUS";
+
+export type FirstTouch = { reason: "TAKE_PROFIT_25" | "STOP_LOSS_25"; candle: Candle } | { reason: "AMBIGUOUS"; candle: Candle } | null;
+
+export function tradeLevels(entryPrice: number) {
+  return { takeProfit: entryPrice * (1 + TAKE_PROFIT), stopLoss: entryPrice * (1 - STOP_LOSS) };
+}
+
+/** Resolve the first level touched by chronologically ordered OHLC candles. */
+export function findFirstTouch(candles: Candle[], takeProfit: number, stopLoss: number): FirstTouch {
+  for (const candle of [...candles].sort((a, b) => a.t - b.t)) {
+    const hitTakeProfit = candle.h >= takeProfit;
+    const hitStopLoss = candle.l <= stopLoss;
+    if (hitTakeProfit && hitStopLoss) return { reason: "AMBIGUOUS", candle };
+    if (hitTakeProfit) return { reason: "TAKE_PROFIT_25", candle };
+    if (hitStopLoss) return { reason: "STOP_LOSS_25", candle };
+  }
+  return null;
+}
 
 export type TradeResult = {
   id: string;
@@ -48,8 +67,9 @@ export type PerformanceMetrics = {
   closed: number;
   takeProfits: number;
   stopLosses: number;
+  winRate: number | null;
   open: number;
-  unknown: number;
+  ambiguous: number;
   maxDrawdownPct: number;
 };
 
@@ -61,7 +81,6 @@ export type AssetReport = PerformanceMetrics & {
   end: number | null;
   /** Compatibility field: account return after compounding the asset's closed trades. */
   netPnlPct: number;
-  winRate: number | null;
   tradesDetail: TradeResult[];
   trades: TradeResult[];
 };
@@ -88,7 +107,7 @@ async function fetchHistory(pair: string): Promise<Candle[]> {
  * One source of truth for report math.
  * allocationPct is the fraction of current equity allocated to each realized trade;
  * 1 means full compounding, while 1/N models equal-weight N-asset allocation.
- * OPEN and UNKNOWN trades are counted but do not change realized equity.
+ * OPEN and AMBIGUOUS trades are counted but do not change realized equity.
  */
 export function summarizeTrades(trades: TradeResult[], initialCapital = 100, allocationPct = 1): PerformanceMetrics {
   const closed = trades.filter((t) => t.exitPrice != null && t.netPct != null);
@@ -127,40 +146,58 @@ export function summarizeTrades(trades: TradeResult[], initialCapital = 100, all
     closed: closed.length,
     takeProfits: winners.length,
     stopLosses: losers.length,
+    winRate: winners.length + losers.length ? (winners.length / (winners.length + losers.length)) * 100 : null,
     open: trades.filter((t) => t.exitReason === "OPEN").length,
-    unknown: trades.filter((t) => t.exitReason === "UNKNOWN").length,
+    ambiguous: trades.filter((t) => t.exitReason === "AMBIGUOUS").length,
     maxDrawdownPct,
   };
 }
 
-export function backtestCandles(symbol: string, name: string, rank: number, candles: Candle[]): AssetReport {
+export async function backtestCandles(symbol: string, name: string, rank: number, pair: string, candles: Candle[]): Promise<AssetReport> {
   const { signals } = analyze(candles);
   const trades: TradeResult[] = [];
   for (const s of signals) {
-    // The strategy entry is the signal close. Execution prices are stored separately.
+    // Store one executed entry per signal; both fixed levels are relative to that entry.
     const idealEntry = s.price;
     const entry = idealEntry * (1 + SLIPPAGE_RATE);
-    const tp = idealEntry * (1 + TAKE_PROFIT);
-    const sl = idealEntry * (1 - STOP_LOSS);
+    const { takeProfit: tp, stopLoss: sl } = tradeLevels(entry);
     let exitPrice: number | null = null;
     let exitTime: number | null = null;
     let reason: ExitReason = "OPEN";
     let idealExit: number | null = null;
     for (let i = s.index + 1; i < candles.length; i++) {
       const c = candles[i];
-      const hitTp = c.h >= tp;
-      const hitSl = c.l <= sl;
-      if (hitTp || hitSl) {
-        // Daily OHLC cannot establish order when both are touched; conservative SL first.
-        reason = hitSl ? "STOP_LOSS_25" : "TAKE_PROFIT_25";
-        idealExit = hitSl ? sl : tp;
+      const hit = findFirstTouch([c], tp, sl);
+      if (hit?.reason === "AMBIGUOUS") {
+        // Daily bars alone cannot establish which level came first. Use finer bars only
+        // to resolve event order; all strategy levels and returns remain Daily-based.
+        let detail = await fetchKlines(pair, "1h", 24, c.t, c.t + DAY_MS - 1).catch(() => []);
+        let finerHit = findFirstTouch(detail, tp, sl);
+        if (finerHit?.reason === "AMBIGUOUS") {
+          detail = await fetchKlines(pair, "1m", 60, finerHit.candle.t, finerHit.candle.t + 3_600_000 - 1).catch(() => []);
+          finerHit = findFirstTouch(detail, tp, sl);
+        }
+        if (!finerHit || finerHit.reason === "AMBIGUOUS") {
+          reason = "AMBIGUOUS";
+          exitTime = c.t;
+        } else {
+          reason = finerHit.reason;
+          idealExit = reason === "STOP_LOSS_25" ? sl : tp;
+          exitPrice = idealExit * (1 - SLIPPAGE_RATE);
+          exitTime = finerHit.candle.t;
+        }
+        break;
+      }
+      if (hit) {
+        reason = hit.reason;
+        idealExit = reason === "STOP_LOSS_25" ? sl : tp;
         exitPrice = idealExit * (1 - SLIPPAGE_RATE);
         exitTime = c.t;
         break;
       }
     }
 
-    const grossPct = idealExit == null ? null : ((idealExit - idealEntry) / idealEntry) * 100;
+    const grossPct = idealExit == null ? null : ((idealExit - entry) / entry) * 100;
     const executionPct = exitPrice == null ? null : ((exitPrice - entry) / entry) * 100;
     const slippagePct = grossPct == null || executionPct == null ? 0 : Math.max(0, grossPct - executionPct);
     const feesPct = exitPrice == null ? 0 : FEE_RATE * 2 * 100;
@@ -191,7 +228,6 @@ export function backtestCandles(symbol: string, name: string, rank: number, cand
     start: candles[0]?.t ?? null,
     end: candles[candles.length - 1]?.t ?? null,
     netPnlPct: metrics.accountReturnPct,
-    winRate: metrics.closed ? (metrics.takeProfits / metrics.closed) * 100 : null,
     tradesDetail: trades,
     trades,
   };
@@ -207,10 +243,10 @@ export async function runBacktest(scope: "all" | string): Promise<{
   const selected: UniverseItem[] = scope === "all" ? st.universe : st.universe.filter((x) => x.symbol === scope.toUpperCase());
   if (!selected.length) throw new Error("market_not_ready");
   const assets: AssetReport[] = [];
-  for (const m of selected.slice(0, 50)) {
+  for (const m of selected.slice(0, 100)) {
     try {
       const candles = await fetchHistory(m.pair);
-      if (candles.length >= 120) assets.push(backtestCandles(m.symbol, m.name, m.rank, candles));
+      if (candles.length >= 120) assets.push(await backtestCandles(m.symbol, m.name, m.rank, m.pair, candles));
     } catch { /* unavailable markets remain explicitly absent, never fabricated */ }
   }
 
@@ -224,8 +260,8 @@ export async function runBacktest(scope: "all" | string): Promise<{
       feePctPerSide: FEE_RATE * 100,
       slippagePctPerSide: SLIPPAGE_RATE * 100,
       allocation: "equal-weight across available assets; realized returns compound chronologically",
-      openTradeTreatment: "OPEN and UNKNOWN are counted but excluded from realized account equity",
-      ambiguity: "daily candle touching both levels is conservatively STOP LOSS first",
+      openTradeTreatment: "OPEN and AMBIGUOUS are counted but excluded from realized account equity",
+      ambiguity: "daily candle touching both levels is resolved with 1h then 1m data; otherwise AMBIGUOUS and excluded from wins/losses",
     },
     assets,
     portfolio,
