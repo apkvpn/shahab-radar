@@ -40,9 +40,17 @@ async function translateText(value: string): Promise<string> {
   if (!value) return "";
   try {
     const res = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(value.slice(0, 1800))}&langpair=en%7Cfa`, { signal: AbortSignal.timeout(2_500) });
-    if (!res.ok) return "";
+    if (!res.ok) throw new Error("translation_primary_unavailable");
     const body = await res.json() as { responseData?: { translatedText?: string } };
-    return body.responseData?.translatedText?.replace(/&#10;/g, " ").replace(/\s+/g, " ").trim() ?? "";
+    const translated = body.responseData?.translatedText?.replace(/&#10;/g, " ").replace(/\s+/g, " ").trim() ?? "";
+    if (translated && translated.toLowerCase() !== value.trim().toLowerCase()) return translated;
+  } catch { /* continue with the secondary translator */ }
+  try {
+    const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=fa&dt=t&q=${encodeURIComponent(value.slice(0, 1800))}`;
+    const res = await fetch(url, { signal: AbortSignal.timeout(2_500) });
+    if (!res.ok) return "";
+    const body = await res.json() as [[string, string][]];
+    return body[0]?.map((part) => part[0]).join("").replace(/\s+/g, " ").trim() ?? "";
   } catch { return ""; }
 }
 async function translate(items: NewsItem[]): Promise<NewsItem[]> {
