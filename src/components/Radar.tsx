@@ -20,6 +20,7 @@ import StatusBar from "./StatusBar";
 import ControlsPanel from "./ControlsPanel";
 import HistoryPanel from "./HistoryPanel";
 import { Btn } from "./ui";
+import StatsReportPanel from "./StatsReportPanel";
 
 const TITLE = "Shahab Radar - سیگنال ترید";
 
@@ -56,10 +57,10 @@ export default function Radar() {
   }, [prefs]);
 
   const [markets, setMarkets] = useState<MarketMetaPublic[]>([]);
-  const [sel, setSel] = useState<Selection>({ symbol: "BTC", tf: "15m", signal: null, nonce: 0 });
+  const [sel, setSel] = useState<Selection>({ symbol: "BTC", tf: "1d", signal: null, nonce: 0 });
   const [search, setSearch] = useState("");
   const [onlyLong, setOnlyLong] = useState(false);
-  const [panel, setPanel] = useState<null | "controls" | "history">(null);
+  const [panel, setPanel] = useState<null | "controls" | "history" | "report">(null);
   const [audioOk, setAudioOk] = useState(false);
   const [perm, setPerm] = useState<Perm | null>(null);
   const [scanning, setScanning] = useState(false);
@@ -261,6 +262,7 @@ export default function Radar() {
             <span className="sm:hidden">تنظیم</span>
           </Btn>
           <Btn onClick={() => setPanel("history")}>تاریخچه</Btn>
+          <Btn variant="lime" onClick={() => setPanel("report")}>گزارش آماری سیگنال‌ها</Btn>
         </div>
       </header>
 
@@ -345,6 +347,7 @@ export default function Radar() {
         />
       )}
       {panel === "history" && <HistoryPanel symbols={symbols} onOpen={openSignal} onClose={() => setPanel(null)} />}
+      {panel === "report" && <StatsReportPanel symbols={symbols} onClose={() => setPanel(null)} />}
     </div>
   );
 }

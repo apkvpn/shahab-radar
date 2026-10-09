@@ -5,7 +5,7 @@ import { TIMEFRAMES, type PublicSignal, type Timeframe } from "@/lib/shared";
 import { fmtDateTime, fmtPrice } from "@/lib/format";
 
 export default function SignalTimeframePanel({ onOpen }: { onOpen: (s: PublicSignal) => void }) {
-  const [tf, setTf] = useState<Timeframe>("15m");
+  const [tf, setTf] = useState<Timeframe>("1d");
   const [items, setItems] = useState<PublicSignal[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);

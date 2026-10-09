@@ -44,12 +44,8 @@ function precisionFor(p: number): number {
   return 9;
 }
 
-const stopLossPercent: Record<Timeframe, number> = {
-  "15m": 0.05,
-  "1h": 0.1,
-  "4h": 0.15,
-  "1d": 0.25,
-};
+const TAKE_PROFIT = 0.25;
+const STOP_LOSS = 0.25;
 
 interface NewsItem {
   id: string;
@@ -386,7 +382,9 @@ export default function ChartPanel({
   const isFull = fs || pseudoFs;
 
   const up = header.change != null && header.change >= 0;
-  const stopLoss = detail ? detail.support * (1 - stopLossPercent[detail.timeframe]) : null;
+  const entryPrice = detail?.price ?? null;
+  const takeProfit = entryPrice == null ? null : entryPrice * (1 + TAKE_PROFIT);
+  const stopLoss = entryPrice == null ? null : entryPrice * (1 - STOP_LOSS);
 
   return (
     <div
@@ -494,12 +492,12 @@ export default function ChartPanel({
             </button>
             <dl className="mt-3 space-y-1.5 border-t border-emerald-100 pt-3">
               <div className="flex items-center justify-between rounded-lg bg-emerald-50 px-2.5 py-1.5">
-                <dt className="font-semibold text-emerald-700">نقطه ورود</dt>
+                <dt className="font-semibold text-emerald-700">قیمت ورود واقعی</dt>
                 <dd className="num text-[15px] font-bold text-emerald-800">{fmtNum(detail.support)}</dd>
               </div>
               <div className="flex items-center justify-between rounded-lg bg-sky-50 px-2.5 py-1.5">
                 <dt className="font-semibold text-sky-700">حد سود</dt>
-                <dd className="num text-[15px] font-bold text-sky-800">{fmtNum(detail.midline)}</dd>
+                <dd className="num text-[15px] font-bold text-sky-800">{takeProfit == null ? "—" : fmtNum(takeProfit)}</dd>
               </div>
               <div className="flex items-center justify-between rounded-lg bg-rose-50 px-2.5 py-1.5">
                 <dt className="font-semibold text-rose-700">حدضرر</dt>

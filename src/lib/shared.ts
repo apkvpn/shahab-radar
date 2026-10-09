@@ -1,16 +1,13 @@
 // Shared (client + server) constants and public types. Contains NO strategy details.
 
-export const TIMEFRAMES = ["15m", "1h", "4h", "1d"] as const;
+export const TIMEFRAMES = ["1d"] as const;
 export type Timeframe = (typeof TIMEFRAMES)[number];
 
 export const TF_MS: Record<Timeframe, number> = {
-  "15m": 900_000,
-  "1h": 3_600_000,
-  "4h": 14_400_000,
   "1d": 86_400_000,
 };
 
-export const TOP_N = 1000;
+export const TOP_N = 50;
 export const SCAN_INTERVAL_SEC = 5;
 
 export function isTimeframe(v: string): v is Timeframe {
@@ -19,12 +16,12 @@ export function isTimeframe(v: string): v is Timeframe {
 
 /** A market shows LONG while its latest confirmed signal is inside this window. */
 export function activeWindowMs(tf: Timeframe): number {
-  return Math.min(Math.max(TF_MS[tf] * 2, 300_000), 86_400_000);
+  return Math.min(Math.max(TF_MS[tf] * 2, 300_000), 7 * 86_400_000);
 }
 
 /** A newly detected signal is only alerted if its candle closed within this window. */
 export function freshWindowMs(tf: Timeframe): number {
-  return Math.min(Math.max(TF_MS[tf], 180_000), 7_200_000);
+  return Math.min(Math.max(TF_MS[tf], 180_000), 3 * 86_400_000);
 }
 
 export interface PublicSignal {

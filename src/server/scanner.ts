@@ -453,7 +453,7 @@ export async function startScanner(): Promise<void> {
       excludedStable?: number;
       unavailable?: number;
     }>("universe");
-    if (cached?.list?.length && cached.list.length >= TOP_N) {
+    if (cached?.list?.length && cached.list.length === TOP_N) {
       applyUniverse(cached.list, "cache", cached.excludedStable ?? 0, cached.unavailable ?? 0);
       st.universeUpdatedAt = cached.at;
       await hydrateLastSignals();

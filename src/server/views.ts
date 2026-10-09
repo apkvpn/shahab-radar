@@ -28,7 +28,7 @@ export function liveTick(symbol: string): { price: number | null; change24h: num
   if (t && t.price > 0) {
     return { price: t.price, change24h: t.open > 0 ? (t.price / t.open - 1) * 100 : null, ts: t.ts };
   }
-  const c = st.combos.get(comboKey(symbol, "15m"));
+  const c = st.combos.get(comboKey(symbol, "1d"));
   const last = c?.candles[c.candles.length - 1];
   if (c && last) return { price: last.c, change24h: null, ts: c.lastUpdateAt };
   return { price: null, change24h: null, ts: 0 };

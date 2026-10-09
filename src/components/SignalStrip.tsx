@@ -6,10 +6,7 @@ import { fmtPrice, fmtTime } from "@/lib/format";
 
 // one controlled accent per timeframe
 const ACCENT: Record<Timeframe, string> = {
-  "15m": "#06b6d4", // cyan
-  "1h": "#8b5cf6", // violet
-  "4h": "#f59e0b", // amber
-  "1d": "#3b82f6", // blue
+  "1d": "#3b82f6",
 };
 
 const Card = memo(function Card({

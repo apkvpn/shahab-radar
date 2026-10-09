@@ -151,9 +151,10 @@ export function analyze(candles: Candle[]): EngineResult {
     const s = sup[i];
     const ps = sup[i - 1];
     if (!Number.isFinite(s) || !Number.isFinite(ps)) continue;
-    const touches = c.l <= s;
-    const prevTouched = p.l <= ps;
-    if (touches && !prevTouched) {
+    // Exact TradingView-style ta.crossunder(low, lower_band):
+    // the prior low must be on/above its band and the closed candle low must cross below it.
+    const crossedUnder = p.l >= ps && c.l < s;
+    if (crossedUnder) {
       signals.push({ index: i, t: c.t, price: c.c, support: s, mid: mid[i], resistance: res[i] });
     }
   }

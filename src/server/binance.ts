@@ -80,9 +80,11 @@ export async function fetchKlines(
   tf: Timeframe,
   limit: number,
   startTime?: number,
+  endTime?: number,
 ): Promise<Candle[]> {
   const params: Record<string, string | number> = { symbol: pair, interval: tf, limit };
   if (startTime && startTime > 0) params.startTime = Math.floor(startTime);
+  if (endTime && endTime > 0) params.endTime = Math.floor(endTime);
   const rows = await binanceGet<unknown[][]>("/api/v3/klines", params);
   const now = nowEx();
   const out: Candle[] = [];
