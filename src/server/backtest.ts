@@ -156,7 +156,10 @@ export function summarizeTrades(trades: TradeResult[], initialCapital = 100, all
 export async function backtestCandles(symbol: string, name: string, rank: number, pair: string, candles: Candle[]): Promise<AssetReport> {
   const { signals } = analyze(candles);
   const trades: TradeResult[] = [];
+  let activeUntil = -Infinity;
   for (const s of signals) {
+    // Default policy: only one open SPOT trade per asset at a time.
+    if (s.t <= activeUntil) continue;
     // Store one executed entry per signal; both fixed levels are relative to that entry.
     const idealEntry = s.price;
     const entry = idealEntry * (1 + SLIPPAGE_RATE);
@@ -217,6 +220,7 @@ export async function backtestCandles(symbol: string, name: string, rank: number
       feesPct,
       netPct,
     });
+    activeUntil = exitTime ?? Number.POSITIVE_INFINITY;
   }
 
   const metrics = summarizeTrades(trades, 100, 1);

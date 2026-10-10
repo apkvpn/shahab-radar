@@ -133,12 +133,12 @@ export function computeBands(candles: Candle[]): { mid: number[]; sup: number[];
 }
 
 /**
- * Detect NEW support interactions on CLOSED candles only.
+ * Detect Touch + Breakout-Up entries on CLOSED candles only.
  * A signal fires on candle i when:
  *  - candle i and candle i-1 have valid OHLC data,
  *  - candle i is closed (final),
- *  - candle i trades into the support zone,
- *  - candle i-1 did NOT (so a continuing interaction never repeats).
+ *  - candle i-1 touched the green line (low <= line),
+ *  - candle i-1 closed on/below the line and candle i closed above it.
  */
 export function analyze(candles: Candle[]): EngineResult {
   const { mid, sup, res } = computeBands(candles);
@@ -151,10 +151,9 @@ export function analyze(candles: Candle[]): EngineResult {
     const s = sup[i];
     const ps = sup[i - 1];
     if (!Number.isFinite(s) || !Number.isFinite(ps)) continue;
-    // Exact TradingView-style ta.crossunder(low, lower_band):
-    // the prior low must be on/above its band and the closed candle low must cross below it.
-    const crossedUnder = p.l >= ps && c.l < s;
-    if (crossedUnder) {
+    const touched = p.l <= ps;
+    const breakoutUp = p.c <= ps && c.c > s;
+    if (touched && breakoutUp) {
       signals.push({ index: i, t: c.t, price: c.c, support: s, mid: mid[i], resistance: res[i] });
     }
   }
