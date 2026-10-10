@@ -251,7 +251,7 @@ export default function ChartPanel({
     if (!activeTrade) return;
     const levels = [
       { price: activeTrade.entryPrice, color: "#0f766e", title: "ENTRY" },
-      { price: activeTrade.takeProfit, color: "#0284c7", title: "TP +25%" },
+      { price: activeTrade.takeProfit, color: "#0284c7", title: "TP · MID" },
       { price: activeTrade.stopLoss, color: "#e11d48", title: "SL −25%" },
       ...(activeTrade.exitPrice == null ? [] : [{ price: activeTrade.exitPrice, color: activeTrade.exitReason === "TAKE_PROFIT_25" ? "#16a34a" : "#dc2626", title: "EXIT" }]),
     ];
@@ -404,7 +404,7 @@ export default function ChartPanel({
 
   const up = header.change != null && header.change >= 0;
   const entryPrice = detail?.price ?? null;
-  const takeProfit = entryPrice == null ? null : entryPrice * (1 + TAKE_PROFIT);
+  const takeProfit = entryPrice == null ? null : detail && detail.midline > entryPrice ? detail.midline : entryPrice * (1 + TAKE_PROFIT);
   const stopLoss = entryPrice == null ? null : entryPrice * (1 - STOP_LOSS);
 
   return (
@@ -533,7 +533,7 @@ export default function ChartPanel({
             <div className="num mt-1 text-slate-500">ورود {fmtDateTime(activeTrade.entryTime)}{activeTrade.exitTime == null ? "" : ` · خروج ${fmtDateTime(activeTrade.exitTime)}`}</div>
             <dl className="mt-2 grid grid-cols-2 gap-x-3 gap-y-1 border-t border-slate-100 pt-2">
               <dt>ورود</dt><dd className="num text-end font-bold">{fmtNum(activeTrade.entryPrice)}</dd>
-              <dt className="text-sky-700">TP +25%</dt><dd className="num text-end font-bold text-sky-700">{fmtNum(activeTrade.takeProfit)}</dd>
+              <dt className="text-sky-700">TP · خط میانی</dt><dd className="num text-end font-bold text-sky-700">{fmtNum(activeTrade.takeProfit)}</dd>
               <dt className="text-rose-700">SL −25%</dt><dd className="num text-end font-bold text-rose-700">{fmtNum(activeTrade.stopLoss)}</dd>
               {activeTrade.exitPrice != null && <><dt>قیمت خروج</dt><dd className="num text-end font-bold">{fmtNum(activeTrade.exitPrice)}</dd></>}
             </dl>
