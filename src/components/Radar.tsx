@@ -231,7 +231,7 @@ export default function Radar() {
   const live = online && snapshot?.status.feed === "connected" && !snapshot.status.stale;
 
   return (
-    <div className="flex min-h-dvh flex-col lg:h-dvh lg:overflow-hidden">
+    <div className="flex min-h-dvh flex-col">
       <header className="flex items-center gap-2 border-b border-line bg-white px-3 py-2">
         <div className="flex items-center gap-2" dir="ltr">
           <span className="grid h-8 w-8 place-items-center rounded-lg bg-[#111214]">
@@ -280,7 +280,7 @@ export default function Radar() {
       <SignalTimeframePanel liveSignals={freshSignals} snapshot={snapshot} onOpenTrade={openTrade} />
       <SignalStrip signals={signals} selectedId={sel.signal?.id ?? null} now={now} onOpen={openSignal} />
 
-      <main className="flex min-h-0 flex-1 flex-col gap-2.5 overflow-y-auto p-2.5">
+      <main className="flex min-h-0 flex-1 flex-col gap-2.5 overflow-visible p-2.5">
         <aside className="order-2 flex h-[380px] w-full shrink-0 flex-col overflow-hidden rounded-2xl border border-line bg-white shadow-[0_8px_30px_rgba(15,23,42,0.08)]">
           <div className="space-y-2.5 border-b border-line bg-[#fbfcfd] p-3">
             <div className="flex items-center justify-between">

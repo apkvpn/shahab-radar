@@ -88,7 +88,7 @@ export function useRadarStream(onAlert: (s: PublicSignal) => void) {
     // Each signal id alerts at most once per browser, even across reconnects/reloads.
     const ingest = (list: PublicSignal[], allowAlert: boolean) => {
       merge(list);
-      if (allowAlert && list.length) {
+      if (list.length) {
         setFreshSignals((prev) => {
           const map = new Map(prev.map((s) => [s.id, s]));
           for (const s of list) map.set(s.id, s);

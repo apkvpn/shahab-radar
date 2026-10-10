@@ -44,7 +44,7 @@ export async function GET(req: Request) {
       write("retry: 3000\n\n");
       let latest: PublicSignal[] = [];
       try {
-        latest = (await latestSignals(15)).map(toPublic);
+        latest = (await latestSignals(100)).map(toPublic);
       } catch {
         /* database hiccup: the snapshot is still useful */
       }
