@@ -127,7 +127,7 @@ export default function ChartPanel({
         fontSize: 11,
         attributionLogo: true,
       },
-      grid: { vertLines: { color: "#e6e6e6" }, horzLines: { color: "#e6e6e6" } },
+      grid: { vertLines: { color: "#f0f3fa" }, horzLines: { color: "#f0f3fa" } },
       rightPriceScale: { borderColor: "#d1d4dc", scaleMargins: { top: 0.08, bottom: 0.1 } },
       timeScale: {
         borderColor: "#d1d4dc",

@@ -44,7 +44,7 @@ export default function SignalTimeframePanel({ onOpenTrade }: { onOpenTrade: (tr
     setLoading(true);
     setError(false);
     try {
-      const r = await fetch("/api/signals/timeline?limit=120", { cache: "no-store" });
+      const r = await fetch("/api/signals/timeline?limit=100", { cache: "no-store" });
       if (!r.ok) throw new Error(String(r.status));
       const data = (await r.json()) as { items?: HistoricalSignal[]; generatedAt?: number };
       setItems(data.items ?? []);
@@ -72,13 +72,13 @@ export default function SignalTimeframePanel({ onOpenTrade }: { onOpenTrade: (tr
   return (
     <section aria-label="آخرین سیگنال‌های تاریخی" className="border-b border-slate-200 bg-white px-3 py-2 text-slate-900 shadow-[0_2px_10px_rgba(15,23,42,0.06)]">
       <div className="flex flex-wrap items-center gap-2">
-        <h2 className="text-[13px] font-extrabold">آخرین سیگنال‌های ۱۰۰ ارز</h2>
-        <span className="rounded-full border border-lime-200 bg-lime-50 px-2 py-0.5 text-[10px] font-bold text-lime-700">از امروز تا ۲۰۱۵</span>
+        <h2 className="text-[13px] font-extrabold">اسکن سیگنال‌های ۱۰۰ ارز مارکت</h2>
+        <span className="rounded-full border border-lime-200 bg-lime-50 px-2 py-0.5 text-[10px] font-bold text-lime-700">لیست ارزها و وضعیت تارگت / استاپ</span>
         <span className="rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-700">تارگت: {counts.tp}</span>
         <span className="rounded-full border border-rose-200 bg-rose-50 px-2 py-0.5 text-[10px] font-bold text-rose-700">استاپ: {counts.sl}</span>
         <span className="rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-[10px] font-bold text-amber-700">مبهم: {counts.ambiguous}</span>
         <span className="num ms-auto text-[10px] text-slate-500">{loading ? "در حال محاسبه از دیتای بازار…" : updatedAt ? `به‌روزرسانی ${date(updatedAt)}` : ""}</span>
-        <button type="button" onClick={() => void load()} disabled={loading} className="rounded-lg border border-line bg-white px-2 py-1 text-[11px] font-semibold hover:bg-slate-50 disabled:opacity-50">بروزرسانی</button>
+        <button type="button" onClick={() => void load()} disabled={loading} className="rounded-lg border border-line bg-white px-2 py-1 text-[11px] font-semibold hover:bg-slate-50 disabled:opacity-50">اسکن ۱۰۰ ارز</button>
       </div>
       <div className="thin-scroll mt-2 flex gap-2 overflow-x-auto pb-1">
         {error && <button type="button" onClick={() => void load()} className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-[12px] text-rose-700">دریافت تاریخچه ناموفق بود؛ تلاش دوباره</button>}

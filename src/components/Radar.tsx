@@ -326,7 +326,7 @@ export default function Radar() {
 
         <section
           ref={chartAnchor}
-          className="order-1 aspect-video min-h-[360px] w-full scroll-mt-2 lg:order-2 lg:h-auto"
+          className="order-1 h-[72dvh] min-h-[520px] w-full scroll-mt-2 lg:order-2 lg:h-[calc(100dvh-190px)]"
         >
           <ChartPanel
             header={header}
