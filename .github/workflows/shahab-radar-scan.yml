@@ -21,7 +21,7 @@ jobs:
           set -u
           successes=0
           for attempt in 1 2 3 4 5; do
-            echo "Scanner batch $attempt/5 (serial 429 backoff)"
+            echo "Scanner batch $attempt/5 (continue filling candle history)"
             if response="$(curl --retry 1 --retry-delay 3 --connect-timeout 10 --max-time 60 -fsS \
               -X POST \
               -H 'Content-Type: application/json' \
