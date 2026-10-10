@@ -1,39 +1,20 @@
-name: Shahab Radar Scanner
+name: Shahab Radar Manual Scan
 on:
-  push:
-    branches: [main]
-  schedule:
-    - cron: "*/10 * * * *"
   workflow_dispatch:
 permissions:
   contents: read
-concurrency:
-  group: shahab-radar-scanner
-  cancel-in-progress: false
 jobs:
   scan:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 2
     steps:
-      - name: Refresh scanner in controlled sequential batches
+      - name: Run one manual scanner batch
         shell: bash
         run: |
-          set -u
-          successes=0
-          for attempt in 1 2 3 4 5; do
-            echo "Scanner batch $attempt/5 (preserve fresh daily candles)"
-            if response="$(curl --retry 1 --retry-delay 3 --connect-timeout 10 --max-time 60 -fsS \
-              -X POST \
-              -H 'Content-Type: application/json' \
-              'https://shahab-trade.webjiko.workers.dev/api/scan/run')"; then
-              echo "$response"
-              if echo "$response" | jq -e '.ok == true and .scanned >= 1' >/dev/null; then
-                successes=$((successes + 1))
-              fi
-            else
-              echo "HTTP request failed on batch $attempt"
-            fi
-            if [ "$attempt" -lt 5 ]; then sleep 25; fi
-          done
-          echo "Successful scanner batches: $successes/5"
-          [ "$successes" -gt 0 ]
+          set -euo pipefail
+          response="$(curl --connect-timeout 10 --max-time 90 -fsS \
+            -X POST \
+            -H 'Content-Type: application/json' \
+            'https://shahab-trade.webjiko.workers.dev/api/scan/run')"
+          echo "$response"
+          echo "$response" | jq -e '.ok == true' >/dev/null
