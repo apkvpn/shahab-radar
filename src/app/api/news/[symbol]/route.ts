@@ -54,11 +54,14 @@ async function translateText(value: string): Promise<string> {
   } catch { return ""; }
 }
 async function translate(items: NewsItem[]): Promise<NewsItem[]> {
-  return Promise.all(items.slice(0, 6).map(async (raw) => {
+  const output: NewsItem[] = [];
+  for (const raw of items.slice(0, 6)) {
     const item = await enrichSummary(raw);
-    const [title, summary] = await Promise.all([translateText(item.title), translateText(item.summary)]);
-    return { ...item, title: title || item.title, summary: summary || item.summary, translated: Boolean(title || summary) };
-  }));
+    const title = await translateText(item.title);
+    const summary = item.summary ? await translateText(item.summary) : "";
+    output.push({ ...item, title: title || item.title, summary: summary || item.summary, translated: Boolean(title || summary) });
+  }
+  return output;
 }
 
 export async function GET(req: NextRequest, ctx: { params: Promise<{ symbol: string }> }) {
