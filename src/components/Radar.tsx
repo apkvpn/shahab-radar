@@ -78,7 +78,7 @@ export default function Radar() {
     flashTitle(`● LONG ${s.symbol} ${s.timeframe}`);
   }, []);
 
-  const { snapshot, signals, online } = useRadarStream(handleAlert);
+  const { snapshot, signals, freshSignals, online } = useRadarStream(handleAlert);
 
   // clock for relative states (LONG window / NEW badge)
   useEffect(() => {
@@ -277,7 +277,7 @@ export default function Radar() {
         </div>
       </header>
 
-      <SignalTimeframePanel onOpenTrade={openTrade} />
+      <SignalTimeframePanel liveSignals={freshSignals} onOpenTrade={openTrade} />
       <SignalStrip signals={signals} selectedId={sel.signal?.id ?? null} now={now} onOpen={openSignal} />
 
       <main className="flex min-h-0 flex-1 flex-col gap-2.5 p-2.5 lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(260px,31vw)] lg:items-start lg:overflow-hidden">
@@ -326,7 +326,7 @@ export default function Radar() {
 
         <section
           ref={chartAnchor}
-          className="order-1 h-[72dvh] min-h-[520px] w-full scroll-mt-2 lg:order-2 lg:h-[calc(100dvh-190px)]"
+          className="order-1 h-auto min-h-[360px] w-full scroll-mt-2 lg:order-2 lg:aspect-[1290/512] lg:max-h-[512px]"
         >
           <ChartPanel
             header={header}

@@ -60,6 +60,7 @@ function saveSeen(s: Set<string>) {
 export function useRadarStream(onAlert: (s: PublicSignal) => void) {
   const [snapshot, setSnapshot] = useState<Snapshot | null>(null);
   const [signals, setSignals] = useState<PublicSignal[]>([]);
+  const [freshSignals, setFreshSignals] = useState<PublicSignal[]>([]);
   const [online, setOnline] = useState(false);
   const lastEvent = useRef(0);
   const alertRef = useRef(onAlert);
@@ -87,6 +88,13 @@ export function useRadarStream(onAlert: (s: PublicSignal) => void) {
     // Each signal id alerts at most once per browser, even across reconnects/reloads.
     const ingest = (list: PublicSignal[], allowAlert: boolean) => {
       merge(list);
+      if (allowAlert && list.length) {
+        setFreshSignals((prev) => {
+          const map = new Map(prev.map((s) => [s.id, s]));
+          for (const s of list) map.set(s.id, s);
+          return [...map.values()].sort((a, b) => b.createdAt - a.createdAt).slice(0, 100);
+        });
+      }
       for (const s of [...list].sort((a, b) => a.createdAt - b.createdAt)) {
         if (seen.has(s.id)) continue;
         seen.add(s.id);
@@ -156,5 +164,5 @@ export function useRadarStream(onAlert: (s: PublicSignal) => void) {
     };
   }, []);
 
-  return { snapshot, signals, online };
+  return { snapshot, signals, freshSignals, online };
 }
