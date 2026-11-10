@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0b0b0c">
+<meta name="description" content="شهاب رادار — رادار سیگنال کریپتو، چارت، برایند هر ارز و گزارش آماری">
+<title>Shahab Radar — رادار سیگنال کریپتو</title>
+<style>
+  :root { color-scheme: dark; }
+  html, body { margin: 0; height: 100%; background: #0b0b0c; color: #e5e7eb; font-family: "Vazirmatn", system-ui, Tahoma, sans-serif; }
+  iframe { display: block; width: 100%; height: 100%; border: 0; background: #fff; }
+  #boot { position: fixed; inset: 0; display: grid; place-content: center; justify-items: center; gap: 16px; background: #0b0b0c; z-index: 2; transition: opacity .35s ease; }
+  #boot.hide { opacity: 0; pointer-events: none; }
+  .radar { width: 54px; height: 54px; border-radius: 50%; border: 2px solid rgba(163,230,53,.35); position: relative; }
+  .radar::after { content: ""; position: absolute; inset: 6px; border-radius: 50%; border: 2px solid rgba(163,230,53,.7); animation: ping 1.8s ease-out infinite; }
+  @keyframes ping { 0% { transform: scale(.5); opacity: 1 } 100% { transform: scale(1.15); opacity: 0 } }
+  p { margin: 0; font-size: 14px; color: #9ca3af; }
+  a { color: #a3e635; font-size: 13px; text-decoration: none; border-bottom: 1px dashed rgba(163,230,53,.5); padding-bottom: 2px; }
+</style>
+</head>
+<body>
+<div id="boot">
+  <div class="radar"></div>
+  <p>در حال باز کردن شهاب رادار…</p>
+  <a id="fallback" href="https://site-7d6464280117404caf21171ce672e304.freebuff.page/" target="_blank" rel="noopener" hidden>باز کردن مستقیم سایت</a>
+</div>
+<iframe id="app" src="https://site-7d6464280117404caf21171ce672e304.freebuff.page/" title="Shahab Radar" allow="clipboard-write; fullscreen; autoplay" referrerpolicy="no-referrer-when-downgrade"></iframe>
+<script>
+  (function () {
+    var frame = document.getElementById("app");
+    var boot = document.getElementById("boot");
+    var fallback = document.getElementById("fallback");
+    var done = false;
+    function ready() {
+      if (done) return;
+      done = true;
+      boot.classList.add("hide");
+      setTimeout(function () { boot.remove(); }, 400);
+    }
+    frame.addEventListener("load", ready);
+    setTimeout(function () { if (!done) fallback.hidden = false; }, 6000);
+    setTimeout(ready, 12000);
+  })();
+</script>
+</body>
+</html>
