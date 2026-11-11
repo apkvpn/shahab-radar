@@ -72,7 +72,7 @@
 
   .chart-card .card-head{gap:10px}
   .sym-title{font-size:18px;font-weight:800}
-  #chart{height:min(50dvh,420px);min-height:240px;width:100%}
+  #chart{height:min(48dvh,400px);min-height:230px;width:100%}
   .stats{display:flex;flex-wrap:wrap;gap:6px;padding:9px 14px;border-top:1px solid var(--line);font-size:11px;color:#475569;align-items:center}
   .stats strong{color:var(--ink)}
 
@@ -82,7 +82,7 @@
   .acc .box .v{font-size:17px;font-weight:800;display:block}
   .acc .box .s{font-size:10px;color:#94a3b8;display:block}
 
-  .tbl-wrap{max-height:min(56dvh,560px);overflow:auto}
+  .tbl-wrap{max-height:min(60dvh,620px);overflow:auto}
   table{width:100%;border-collapse:collapse;font-size:12px}
   thead th{position:sticky;top:0;background:#fbfcfd;color:#64748b;font-weight:700;font-size:11px;text-align:start;
     padding:8px 10px;border-bottom:1px solid var(--line);white-space:nowrap;z-index:1}
@@ -104,7 +104,7 @@
 
   @media (min-width:760px){ .srow{grid-template-columns:minmax(0,1.1fr) minmax(0,1fr) auto} .nums{display:flex} }
   @media (min-width:1024px){
-    main{grid-template-columns:minmax(0,1fr) 400px;align-items:start}
+    main{grid-template-columns:minmax(0,1fr) 430px;align-items:start}
     .chart-card{grid-column:1;grid-row:1} #signals-sec{grid-column:1;grid-row:2}
     .radar-card{grid-column:2;grid-row:1/span 2;max-height:calc(100dvh - 90px)}
   }
@@ -302,7 +302,9 @@ function statsOf(settled) {
    DATA — Gate.io spot, straight from the browser (CORS is open)
    ============================================================================ */
 const HOST = "https://api.gateio.ws";
-const TOP = 45, TTL = 6 * 60_000, CONC = 8;
+const UNIVERSE = 1000;   // top markets by 24h quote volume
+const BATCH = 110;       // markets scanned per one-minute tick
+const TTL = 20 * 60_000, CONC = 6;
 const TF = [
   { k: "15m", iv: "15m", ms: 900e3,   bars: 500, label: "۱۵m" },
   { k: "1h",  iv: "1h",  ms: 3600e3,  bars: 500, label: "۱h"  },
@@ -328,7 +330,7 @@ async function api(path, params, tries = 3) {
       err = new Error("gate_" + res.status);
       if (res.status !== 429 && res.status < 500) break;
     } catch (e) { err = e; }
-    await sleep(500 * (a + 1));
+    await sleep(900 * (a + 1) + Math.round(Math.random() * 300));
   }
   throw err || new Error("gate_error");
 }
@@ -364,7 +366,7 @@ async function universe() {
     ranked.push({ symbol: base, pair: cp, price, volume: vol, change: Number.isFinite(chg) ? chg : null });
   }
   ranked.sort((a, b) => b.volume - a.volume);
-  return ranked.slice(0, TOP).map((m, i) => ({ ...m, rank: i + 1 }));
+  return ranked.slice(0, UNIVERSE).map((m, i) => ({ ...m, rank: i + 1 }));
 }
 
 /* Gate answers from/to windows with a payload the browser cannot read
@@ -377,7 +379,7 @@ async function candles(pair, tf, bars) {
 }
 
 /* ---- snapshot cache -------------------------------------------------------- */
-const KEY = "shahab-radar-v4";
+const KEY = "shahab-radar-v5";
 let snap = null;
 function loadCache() {
   try {
@@ -386,13 +388,19 @@ function loadCache() {
     return d && d.at && Date.now() - d.at < TTL && d.markets?.length ? d : null;
   } catch { return null; }
 }
-function saveCache() { try { if (snap) localStorage.setItem(KEY, JSON.stringify(snap)); } catch {} }
+function saveCache() {
+  try {
+    if (!snap) return;
+    localStorage.setItem(KEY, JSON.stringify(snap));
+  } catch { /* storage full: keep running without cache */ }
+}
 
 /* ============================================================================
    STATE
    ============================================================================ */
 const state = {
-  markets: [], signals: [], at: 0, scanned: 0, total: 0, busy: false,
+  markets: [], signals: [], at: 0, cursor: 0, round: 0,
+  busy: false, total: 0, scanned: 0,
   selected: null, tf: "1d", sigTf: "all", strict: true, charts: new Map(),
 };
 const $ = id => document.getElementById(id);
@@ -416,12 +424,12 @@ function renderSignals() {
     .filter(s => state.sigTf === "all" || s.tf === state.sigTf)
     .sort((a, b) => b.signalTime - a.signalTime);
   $("sigCount").textContent = `${fa(list.length)} سیگنال`;
-  $("sigNote").textContent = state.strict ? "فقط ستاپ‌های با کیفیت (بازگشت بالای حمایت + شیب مثبت)" : "همه‌ی شکست‌های حمایت";
+  $("sigNote").textContent = state.strict ? "کیفیت بالا: بازگشت بالای حمایت + شیب مثبت" : "همه‌ی شکست‌های حمایت";
   if (!list.length) {
-    box.innerHTML = `<div class="boot"><span>${state.busy ? "در حال اسکن بازارها…" : "سیگنالی با این شرط پیدا نشد."}</span><span class="bar"><i style="width:${state.total ? Math.round(state.scanned / state.total * 100) : 0}%"></i></span></div>`;
+    box.innerHTML = `<div class="boot"><span>${state.busy ? "در حال اسکن بازارها…" : "سیگنالی با این شرط پیدا نشد."}</span></div>`;
     return;
   }
-  box.innerHTML = "";
+  const frag = document.createDocumentFragment();
   for (const s of list) {
     const m = state.markets.find(x => x.symbol === s.symbol);
     const tfMs = tfOf(s.tf).ms;
@@ -437,7 +445,6 @@ function renderSignals() {
         <span class="tag tf num">${s.tf}</span>
         <span class="sym num">${s.symbol}</span>
         <span class="when num">${when(s.signalTime, tfMs)}</span>
-        ${s.quality ? `<span class="tag" style="background:#f7fee7;color:#4d7c0f">کیفیت بالا</span>` : ""}
       </span>
       <span class="nums num">
         <span>ورود <b>${fmt(s.price)}</b></span>
@@ -447,19 +454,31 @@ function renderSignals() {
       </span>
       <span class="dist num ${t2 ? "chip green" : t1 ? "chip lime" : "chip blue"}">${badge}</span>`;
     b.onclick = () => { state.tf = s.tf; renderAll(); selectSymbol(s.symbol, s.tf); };
-    box.appendChild(b);
+    frag.appendChild(b);
   }
+  box.innerHTML = "";
+  box.appendChild(frag);
+}
+
+/* radar order: daily signal first, then 4h, 1h, 15m, then everything else by volume */
+const PRIORITY = ["1d", "4h", "1h", "15m"];
+function rankOf(m) {
+  for (let i = 0; i < PRIORITY.length; i++) if (m.sigs?.[PRIORITY[i]]) return i;
+  return PRIORITY.length;
 }
 
 function renderRows() {
   const q = ($("search").value || "").trim().toUpperCase();
   const only = $("onlyLong").dataset.on === "1";
   const body = $("rows");
-  body.innerHTML = "";
-  for (const m of state.markets) {
+  const list = state.markets
+    .map(m => ({ m, r: rankOf(m) }))
+    .sort((a, b) => a.r - b.r || b.m.volume - a.m.volume);
+  const frag = document.createDocumentFragment();
+  let n = 0;
+  for (const { m, r } of list) {
     if (q && !m.symbol.includes(q)) continue;
-    const lit = TFK.filter(k => m.sigs?.[k]);
-    if (only && !lit.length) continue;
+    if (only && r === PRIORITY.length) continue;
     const tr = document.createElement("tr");
     tr.dataset.symbol = m.symbol;
     if (state.selected === m.symbol) tr.className = "sel";
@@ -471,14 +490,16 @@ function renderRows() {
       return `<td><span class="lit ${s.quality ? "on" : "mid"}${fresh ? "" : " stale"}" title="${when(s.signalTime, tfOf(k).ms)}">${short}</span></td>`;
     }).join("");
     tr.innerHTML = `
-      <td class="num muted">${m.rank}</td>
+      <td class="num muted">${++n}</td>
       <td class="num" style="font-weight:800">${m.symbol}</td>
       <td class="num">${fmt(m.price)}</td>
       <td class="num ${m.change == null ? "" : m.change >= 0 ? "up" : "down"}">${pct(m.change)}</td>
       ${cells}`;
     tr.onclick = () => selectSymbol(m.symbol, state.tf);
-    body.appendChild(tr);
+    frag.appendChild(tr);
   }
+  body.innerHTML = "";
+  body.appendChild(frag);
 }
 
 function setProgress(frac, text) {
@@ -487,98 +508,114 @@ function setProgress(frac, text) {
 }
 
 /* ============================================================================
-   SCAN
+   SCAN — one rotating slice per minute across the top markets
    ============================================================================ */
-async function scan(force) {
-  if (state.busy) return;
-  if (!force) {
-    const cached = loadCache();
-    if (cached) {
-      state.markets = cached.markets; state.signals = cached.signals; state.at = cached.at;
-      state.total = cached.total || cached.markets.length; state.scanned = state.total;
-      renderAll(); $("scanBoot").style.display = "none";
-      paintStatus("زنده", "live");
-      if (Date.now() - cached.at < 3 * 60_000) return;
-    }
+async function loadUniverse(force) {
+  const cached = !force && loadCache();
+  if (cached) {
+    state.markets = cached.markets; state.signals = cached.signals || [];
+    state.at = cached.at; state.cursor = cached.cursor || 0; state.round = cached.round || 0;
+    state.total = cached.markets.length; state.scanned = cached.markets.filter(m => m.scannedAt).length;
+    renderAll(); $("scanBoot").style.display = "none";
+    paintStatus("زنده", "live");
+    if (Date.now() - cached.at < 60_000) return;
   }
+  const markets = await universe();
+  const prev = new Map(state.markets.map(m => [m.symbol, m]));
+  state.markets = markets.map(m => {
+    const old = prev.get(m.symbol);
+    return old ? { ...m, sigs: old.sigs || {}, scannedAt: old.scannedAt || 0 } : { ...m, sigs: {}, scannedAt: 0 };
+  });
+  state.total = state.markets.length;
+  rebuildSignals();
+  renderAll();
+}
+
+function rebuildSignals() {
+  const out = [];
+  for (const m of state.markets) for (const k of TFK) if (m.sigs?.[k]) out.push(m.sigs[k]);
+  state.signals = out;
+}
+
+async function scanSlice() {
+  if (state.busy || !state.markets.length) return;
   state.busy = true;
   paintStatus("در حال اسکن", "warn");
-  try {
-    const markets = await universe();
-    state.markets = markets.map(m => ({ ...m, sigs: {} }));
-    state.total = markets.length; state.scanned = 0; state.signals = [];
-    renderRows(); renderSignals();
-    const queue = [...state.markets];
-    let done = 0;
-    const worker = async () => {
-      for (;;) {
-        const m = queue.shift();
-        if (!m) return;
-        try {
-          const hist = {};
-          for (const tf of TF) hist[tf.k] = await candles(m.pair, tf, tf.bars);
-          for (const tf of TF) {
-            const own = hist[tf.k];
-            if (own.length < 2 * W + 10) continue;
-            const a = analyze(own);
-            const sig = a.signals[a.signals.length - 1];
-            if (!sig) continue;
-            if (state.strict && !sig.quality) continue;
-            m.sigs[tf.k] = {
-              id: `${m.symbol}-${tf.k}-${sig.t}`, symbol: m.symbol, tf: tf.k, rank: m.rank,
-              price: sig.price, support: sig.support, mid: sig.mid, sl: sig.sl, tp1: sig.tp1, tp2: sig.tp2,
-              quality: sig.quality, candleTime: sig.t,
-              signalTime: sig.live ? Date.now() : sig.t + tf.ms, live: sig.live,
-            };
-            state.signals.push(m.sigs[tf.k]);
-          }
-        } catch (e) { /* a market that fails simply has no signal */ }
-        done++; state.scanned = done;
-        setProgress(done / markets.length, `اسکن ${fa(done)} از ${fa(markets.length)} بازار · ${TFK.length} تایم‌فریم`);
-        if (done % 3 === 0) { renderRows(); renderSignals(); }
-      }
-    };
-    await Promise.all(Array.from({ length: CONC }, worker));
-    state.at = Date.now(); state.busy = false; state.scanned = markets.length;
-    snap = { at: state.at, total: state.total, markets: state.markets, signals: state.signals };
-    saveCache();
-    renderAll();
-    $("scanBoot").style.display = "none";
-    paintStatus("زنده", "live");
-    $("updated").textContent = `آخرین اسکن ${timeKey(Date.now())}`;
-  } catch (e) {
-    state.busy = false;
-    paintStatus("خطا در اتصال", "warn");
-    $("scanText").textContent = "دسترسی به Gate.io برقرار نشد؛ دوباره تلاش کنید.";
-  }
+  $("scanBoot").style.display = "flex";
+  const total = state.markets.length;
+  const start = state.cursor % total;
+  const slice = [];
+  for (let i = 0; i < Math.min(BATCH, total); i++) slice.push(state.markets[(start + i) % total]);
+  state.cursor = (start + slice.length) % total;
+  if (state.cursor < start) state.round++;
+
+  let done = 0;
+  const queue = [...slice];
+  const worker = async () => {
+    for (;;) {
+      const m = queue.shift();
+      if (!m) return;
+      try {
+        const hist = {};
+        for (const tf of TF) hist[tf.k] = await candles(m.pair, tf, tf.bars);
+        m.sigs = {};
+        for (const tf of TF) {
+          const own = hist[tf.k];
+          if (own.length < 2 * W + 10) continue;
+          const a = analyze(own);
+          const sig = a.signals[a.signals.length - 1];
+          if (!sig) continue;
+          if (state.strict && !sig.quality) continue;
+          m.sigs[tf.k] = {
+            id: `${m.symbol}-${tf.k}-${sig.t}`, symbol: m.symbol, tf: tf.k, rank: m.rank,
+            price: sig.price, support: sig.support, mid: sig.mid, sl: sig.sl, tp1: sig.tp1, tp2: sig.tp2,
+            quality: sig.quality, candleTime: sig.t,
+            signalTime: sig.live ? Date.now() : sig.t + tf.ms, live: sig.live,
+          };
+        }
+        m.scannedAt = Date.now();
+      } catch (e) { /* a market that fails keeps its previous state */ }
+      done++; state.scanned++;
+      setProgress(done / slice.length, `اسکن ${fa(state.scanned)} بازار از ${fa(total)} · اسکن بعدی تا ۱ دقیقه`);
+      if (done % 12 === 0) { rebuildSignals(); renderRows(); renderSignals(); }
+    }
+  };
+  await Promise.all(Array.from({ length: CONC }, worker));
+  state.busy = false;
+  rebuildSignals();
+  renderAll();
+  $("scanBoot").style.display = "none";
+  paintStatus("زنده", "live");
+  state.at = Date.now();
+  snap = { at: state.at, cursor: state.cursor, round: state.round, markets: state.markets, signals: state.signals };
+  saveCache();
 }
 
 /* ============================================================================
    CHART + ACCURACY
    ============================================================================ */
-let chartApi = null, candleSeries = null, bandS = null, markersApi = null, priceLines = [];
+let chartApi = null, candleSeries = null, bandS = null, markersApi = null;
 
 function initChart() {
   const chart = LightweightCharts.createChart($("chart"), {
     autoSize: true,
     layout: { background: { type: "solid", color: "#ffffff" }, textColor: "#131722", fontFamily: "Vazirmatn Variable, sans-serif", fontSize: 11, attributionLogo: true },
-    grid: { vertLines: { color: "#f1f4f9" }, horzLines: { color: "#f1f4f9" } },
-    rightPriceScale: { borderColor: "#e4e6ea", entireTextOnly: true, scaleMargins: { top: 0.12, bottom: 0.14 } },
-    timeScale: { borderColor: "#e4e6ea", timeVisible: false, rightOffset: 5, barSpacing: 5, minBarSpacing: 0.2 },
-    crosshair: { mode: 0 },
+    grid: { vertLines: { visible: false }, horzLines: { color: "#f4f6f9" } },
+    rightPriceScale: { borderVisible: false, entireTextOnly: true, scaleMargins: { top: 0.14, bottom: 0.14 } },
+    timeScale: { borderVisible: false, timeVisible: false, rightOffset: 5, barSpacing: 5, minBarSpacing: 0.2 },
+    crosshair: { mode: 0, vertLine: { visible: false, labelVisible: false }, horzLine: { labelVisible: false } },
   });
   candleSeries = chart.addSeries(LightweightCharts.CandlestickSeries, {
     upColor: "#26a69a", downColor: "#ef5350", borderVisible: false,
     wickUpColor: "#26a69a", wickDownColor: "#ef5350", priceLineVisible: false,
   });
-  const line = (color, width, style) => chart.addSeries(LightweightCharts.LineSeries, {
+  const line = (color, width, style, visible) => chart.addSeries(LightweightCharts.LineSeries, {
     color, lineWidth: width, lineStyle: style, priceLineVisible: false, lastValueVisible: false,
-    crosshairMarkerVisible: false, autoscaleInfoProvider: () => null,
+    crosshairMarkerVisible: false, visible, autoscaleInfoProvider: () => null,
   });
   bandS = {
-    sup: line("#22c55e", 1, LightweightCharts.LineStyle.Dashed),
-    mid: line("#94a3b8", 1, LightweightCharts.LineStyle.Solid),
-    res: line("#f87171", 1, LightweightCharts.LineStyle.Dashed),
+    sup: line("#34d399", 1, LightweightCharts.LineStyle.Dashed, true),
+    mid: line("#cbd5e1", 1, LightweightCharts.LineStyle.Solid, false),
   };
   markersApi = LightweightCharts.createSeriesMarkers(candleSeries, []);
   chartApi = chart;
@@ -619,25 +656,13 @@ function drawChart(symbol, entry) {
 
   candleSeries.setData(c.map(k => ({ time: Math.floor(k.t / 1000), open: k.o, high: k.h, low: k.l, close: k.c })));
   const pts = arr => arr.map((v, i) => ({ time: Math.floor(c[i].t / 1000), value: v })).filter(p => Number.isFinite(p.value));
-  bandS.sup.setData(pts(res.sup)); bandS.mid.setData(pts(res.mid)); bandS.res.setData(pts(res.res));
+  bandS.sup.setData(pts(res.sup));
+  bandS.mid.setData(pts(res.mid));
   markersApi.setMarkers(shown.map(s => ({
     time: Math.floor(s.t / 1000), position: "belowBar", shape: "arrowUp",
-    color: s.outcome === "TP2" ? "#16a34a" : s.outcome === "TP1" ? "#84cc16" : s.outcome === "SL" ? "#cbd5e1" : "#65a30d",
-    size: 1, text: "",
+    color: s.outcome === "TP2" ? "#16a34a" : s.outcome === "TP1" ? "#84cc16" : "#d1d5db",
+    size: 0.6, text: "",
   })));
-
-  for (const pl of priceLines) { try { candleSeries.removePriceLine(pl); } catch {} }
-  priceLines = [];
-  const lastSig = shown[shown.length - 1];
-  if (lastSig) {
-    const add = (price, color, title, style) => {
-      const pl = candleSeries.createPriceLine({ price, color, lineWidth: 1, lineStyle: style, axisLabelVisible: true, title });
-      priceLines.push(pl);
-    };
-    add(lastSig.tp2, "#0284c7", "هدف۲", LightweightCharts.LineStyle.Dotted);
-    add(lastSig.tp1, "#16a34a", "هدف۱", LightweightCharts.LineStyle.Dotted);
-    add(lastSig.sl, "#ef4444", "حدضرر", LightweightCharts.LineStyle.Dashed);
-  }
   chartApi.timeScale().fitContent();
 
   const m = state.markets.find(x => x.symbol === symbol);
@@ -656,8 +681,7 @@ function drawChart(symbol, entry) {
     <span class="chip">${fa(stAll.signals)} سیگنال</span>
     <span class="chip green">دقت هدف۱: ${stAll.hit.toFixed(0)}٪</span>
     <span class="chip blue">دقت هدف۲: ${stAll.hitFull.toFixed(0)}٪</span>
-    ${stStrict && stStrict.signals ? `<span class="chip lime">با فیلتر کیفیت: ${stStrict.hit.toFixed(0)}٪ (${fa(stStrict.signals)} سیگنال)</span>` : ""}
-    <span class="muted" style="margin-inline-start:auto">حد ضرر ۲.۵×ATR</span>`;
+    ${stStrict && stStrict.signals ? `<span class="chip lime">با فیلتر کیفیت: ${stStrict.hit.toFixed(0)}٪ (${fa(stStrict.signals)})</span>` : ""}`;
 
   const box = (k, v, s, tone) => `<div class="box"><span class="k">${k}</span><span class="v num ${tone || ""}">${v}</span><span class="s num">${s}</span></div>`;
   $("acc").innerHTML = !stAll ? `<div class="muted">هنوز سیگنالی برای سنجش دقت در این بازار نیست.</div>` : `
@@ -693,7 +717,9 @@ function renderTabs() {
 
 function renderAll() {
   renderTabs(); renderRows(); renderSignals();
-  $("updated").textContent = state.at ? `آخرین اسکن ${timeKey(state.at)}` : "—";
+  $("updated").textContent = state.at
+    ? `اسکن ${fa(state.scanned)} از ${fa(state.total)} بازار · دور ${fa(state.round + 1)}`
+    : "—";
   if (!state.selected && state.markets.length) selectSymbol(state.markets[0].symbol, state.tf);
 }
 
@@ -707,10 +733,11 @@ function tickCountdown() {
 
 $("refresh").onclick = async () => {
   localStorage.removeItem(KEY);
-  state.charts.clear();
+  state.charts.clear(); state.cursor = 0; state.round = 0; state.scanned = 0;
   $("scanBoot").style.display = "flex";
   setProgress(0, "در حال دریافت بازارها…");
-  await scan(true);
+  await loadUniverse(true);
+  await scanSlice();
 };
 $("search").oninput = renderRows;
 $("onlyLong").onclick = () => {
@@ -723,21 +750,31 @@ $("mode").onclick = async () => {
   state.strict = !state.strict;
   renderTabs();
   if (state.selected) selectSymbol(state.selected, state.tf);
+  state.markets.forEach(m => { m.sigs = {}; });
+  rebuildSignals();
+  renderRows(); renderSignals();
   localStorage.removeItem(KEY);
-  await scan(true);
+  await scanSlice();
 };
 
-window.__radar = { state, candles, toPair, analyze, scan };
+window.__radar = { state, candles, toPair, analyze, scanSlice, loadUniverse };
 
-(function boot() {
+(async function boot() {
   initChart();
   renderTabs();
   renderRows();
   tickCountdown();
-  scan(false);
+  try {
+    await loadUniverse(false);
+  } catch (e) {
+    paintStatus("خطا در اتصال", "warn");
+    $("scanText").textContent = "دسترسی به Gate.io برقرار نشد؛ دوباره تلاش کنید.";
+  }
+  scanSlice();
+  setTimeout(scanSlice, 8_000);          // warm up two slices so the radar fills quickly
   setInterval(tickCountdown, 15_000);
-  setInterval(() => { renderSignals(); renderRows(); }, 45_000);
-  setInterval(() => { if (!state.busy && Date.now() - state.at > TTL) scan(true); }, 60_000);
+  setInterval(() => { if (!state.busy) scanSlice(); }, 60_000);
+  setInterval(() => { renderSignals(); }, 45_000);
 })();
 </script>
 </body>
