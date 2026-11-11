@@ -303,7 +303,7 @@ function statsOf(settled) {
    ============================================================================ */
 const HOST = "https://api.gateio.ws";
 const UNIVERSE = 1000;   // top markets by 24h quote volume
-const BATCH = 110;       // markets scanned per one-minute tick
+const BATCH = 110;       // markets scanned per slice inside a round
 const TTL = 20 * 60_000, CONC = 6;
 const TF = [
   { k: "15m", iv: "15m", ms: 900e3,   bars: 500, label: "۱۵m" },
@@ -399,7 +399,7 @@ function saveCache() {
    STATE
    ============================================================================ */
 const state = {
-  markets: [], signals: [], at: 0, cursor: 0, round: 0,
+  markets: [], signals: [], at: 0, cursor: 0, round: 0, gen: 0, scannedRound: 0,
   busy: false, total: 0, scanned: 0,
   selected: null, tf: "1d", sigTf: "all", strict: true, charts: new Map(),
 };
@@ -508,7 +508,7 @@ function setProgress(frac, text) {
 }
 
 /* ============================================================================
-   SCAN — one rotating slice per minute across the top markets
+   SCAN — continuous slices inside a round, then a one-minute rest
    ============================================================================ */
 async function loadUniverse(force) {
   const cached = !force && loadCache();
@@ -548,6 +548,7 @@ async function scanSlice() {
   for (let i = 0; i < Math.min(BATCH, total); i++) slice.push(state.markets[(start + i) % total]);
   state.cursor = (start + slice.length) % total;
   if (state.cursor < start) state.round++;
+  if (start === 0) state.scannedRound = 0;
 
   let done = 0;
   const queue = [...slice];
@@ -575,8 +576,9 @@ async function scanSlice() {
         }
         m.scannedAt = Date.now();
       } catch (e) { /* a market that fails keeps its previous state */ }
-      done++; state.scanned++;
-      setProgress(done / slice.length, `اسکن ${fa(state.scanned)} بازار از ${fa(total)} · اسکن بعدی تا ۱ دقیقه`);
+      done++; state.scanned++; state.scannedRound++;
+      setProgress((state.scannedRound % BATCH) / slice.length,
+        `دور ${fa(state.round + 1)} · ${fa(state.scannedRound)} از ${fa(total)} بازار`);
       if (done % 12 === 0) { rebuildSignals(); renderRows(); renderSignals(); }
     }
   };
@@ -591,10 +593,27 @@ async function scanSlice() {
   saveCache();
 }
 
+/* one full sweep of every market, then a one-minute rest, then again */
+async function runRounds() {
+  const gen = ++state.gen;
+  for (;;) {
+    const r0 = state.round;
+    while (state.round === r0) {
+      if (state.gen !== gen || !state.markets.length) return;
+      if (state.busy) { await sleep(300); continue; }
+      await scanSlice();
+    }
+    if (state.gen !== gen) return;
+    paintStatus("مکث ۱ دقیقه", "warn");
+    setProgress(1, `دور ${fa(state.round)} کامل شد · شروع دوباره تا ۱ دقیقه`);
+    await sleep(60_000);
+  }
+}
+
 /* ============================================================================
    CHART + ACCURACY
    ============================================================================ */
-let chartApi = null, candleSeries = null, bandS = null, markersApi = null;
+let chartApi = null, candleSeries = null, bandS = null, markersApi = null, priceLines = [];
 
 function initChart() {
   const chart = LightweightCharts.createChart($("chart"), {
@@ -614,8 +633,9 @@ function initChart() {
     crosshairMarkerVisible: false, visible, autoscaleInfoProvider: () => null,
   });
   bandS = {
-    sup: line("#34d399", 1, LightweightCharts.LineStyle.Dashed, true),
-    mid: line("#cbd5e1", 1, LightweightCharts.LineStyle.Solid, false),
+    sup: line("#22c55e", 1, LightweightCharts.LineStyle.Dashed, true),
+    mid: line("#94a3b8", 1, LightweightCharts.LineStyle.Solid, true),
+    res: line("#f87171", 1, LightweightCharts.LineStyle.Dashed, true),
   };
   markersApi = LightweightCharts.createSeriesMarkers(candleSeries, []);
   chartApi = chart;
@@ -658,11 +678,25 @@ function drawChart(symbol, entry) {
   const pts = arr => arr.map((v, i) => ({ time: Math.floor(c[i].t / 1000), value: v })).filter(p => Number.isFinite(p.value));
   bandS.sup.setData(pts(res.sup));
   bandS.mid.setData(pts(res.mid));
+  bandS.res.setData(pts(res.res));
   markersApi.setMarkers(shown.map(s => ({
     time: Math.floor(s.t / 1000), position: "belowBar", shape: "arrowUp",
     color: s.outcome === "TP2" ? "#16a34a" : s.outcome === "TP1" ? "#84cc16" : "#d1d5db",
     size: 0.6, text: "",
   })));
+
+  for (const pl of priceLines) { try { candleSeries.removePriceLine(pl); } catch {} }
+  priceLines = [];
+  const lastSig = shown[shown.length - 1];
+  if (lastSig) {
+    const add = (price, color, title, style) => {
+      const pl = candleSeries.createPriceLine({ price, color, lineWidth: 1, lineStyle: style, axisLabelVisible: true, title });
+      priceLines.push(pl);
+    };
+    add(lastSig.tp2, "#0284c7", "هدف۲", LightweightCharts.LineStyle.Dotted);
+    add(lastSig.tp1, "#16a34a", "هدف۱", LightweightCharts.LineStyle.Dotted);
+    add(lastSig.sl, "#ef4444", "حدضرر", LightweightCharts.LineStyle.Dashed);
+  }
   chartApi.timeScale().fitContent();
 
   const m = state.markets.find(x => x.symbol === symbol);
@@ -717,8 +751,8 @@ function renderTabs() {
 
 function renderAll() {
   renderTabs(); renderRows(); renderSignals();
-  $("updated").textContent = state.at
-    ? `اسکن ${fa(state.scanned)} از ${fa(state.total)} بازار · دور ${fa(state.round + 1)}`
+  $("updated").textContent = state.total
+    ? `دور ${fa(state.round + 1)} · ${fa(Math.min(state.scannedRound, state.total))} از ${fa(state.total)} بازار`
     : "—";
   if (!state.selected && state.markets.length) selectSymbol(state.markets[0].symbol, state.tf);
 }
@@ -737,7 +771,7 @@ $("refresh").onclick = async () => {
   $("scanBoot").style.display = "flex";
   setProgress(0, "در حال دریافت بازارها…");
   await loadUniverse(true);
-  await scanSlice();
+  runRounds();
 };
 $("search").oninput = renderRows;
 $("onlyLong").onclick = () => {
@@ -754,7 +788,8 @@ $("mode").onclick = async () => {
   rebuildSignals();
   renderRows(); renderSignals();
   localStorage.removeItem(KEY);
-  await scanSlice();
+  state.cursor = 0; state.round = 0; state.scannedRound = 0;
+  runRounds();
 };
 
 window.__radar = { state, candles, toPair, analyze, scanSlice, loadUniverse };
@@ -770,10 +805,8 @@ window.__radar = { state, candles, toPair, analyze, scanSlice, loadUniverse };
     paintStatus("خطا در اتصال", "warn");
     $("scanText").textContent = "دسترسی به Gate.io برقرار نشد؛ دوباره تلاش کنید.";
   }
-  scanSlice();
-  setTimeout(scanSlice, 8_000);          // warm up two slices so the radar fills quickly
+  runRounds();                           // full 1000-market sweep, 1 minute rest, repeat
   setInterval(tickCountdown, 15_000);
-  setInterval(() => { if (!state.busy) scanSlice(); }, 60_000);
   setInterval(() => { renderSignals(); }, 45_000);
 })();
 </script>
