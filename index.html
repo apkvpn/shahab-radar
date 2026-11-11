@@ -304,7 +304,7 @@ function statsOf(settled) {
 const HOST = "https://api.gateio.ws";
 const UNIVERSE = 1000;   // top markets by 24h quote volume
 const BATCH = 110;       // markets scanned per slice inside a round
-const TTL = 20 * 60_000, CONC = 6;
+const TTL = 20 * 60_000, CONC = 6;   // requests are paced by the api() queue
 const TF = [
   { k: "15m", iv: "15m", ms: 900e3,   bars: 500, label: "۱۵m" },
   { k: "1h",  iv: "1h",  ms: 3600e3,  bars: 500, label: "۱h"  },
@@ -319,20 +319,30 @@ const toPair = s => s.includes("_") ? s.toUpperCase() : `${s.replace(/USDT$/i, "
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 const nowSec = () => Math.floor(Date.now() / 1000);
 
-async function api(path, params, tries = 3) {
+/* Gate throttles a browser that fires thousands of calls, and a refused call
+   arrives without CORS headers. Every request therefore takes a slot in one
+   global queue whose gap widens whenever Gate starts pushing back. */
+let nextSlot = 0, gap = 130;
+async function api(path, params, tries = 3, priority = false) {
   const qs = new URLSearchParams(Object.entries(params || {}).map(([k, v]) => [k, String(v)]));
   const url = `${HOST}${path}?${qs}`;
-  let err;
+  if (priority) nextSlot = Date.now();
   for (let a = 0; a < tries; a++) {
+    const now = Date.now();
+    const wait = Math.max(0, nextSlot - now);
+    nextSlot = Math.max(now, nextSlot) + gap;
+    if (wait > 0) await sleep(wait);
     try {
       const res = await fetch(url, { cache: "no-store" });
-      if (res.ok) return await res.json();
-      err = new Error("gate_" + res.status);
-      if (res.status !== 429 && res.status < 500) break;
-    } catch (e) { err = e; }
-    await sleep(900 * (a + 1) + Math.round(Math.random() * 300));
+      if (res.ok) { gap = Math.max(110, gap - 4); return await res.json(); }
+      if (res.status === 429) { gap = Math.min(900, Math.round(gap * 1.7)); await sleep(1500); continue; }
+      throw new Error("gate_" + res.status);
+    } catch (e) {
+      gap = Math.min(900, Math.round(gap * 1.4));
+      await sleep(500 * (a + 1) + Math.round(Math.random() * 400));
+    }
   }
-  throw err || new Error("gate_error");
+  throw new Error("gate_failed");
 }
 
 function parse(rows, tfMs) {
@@ -371,10 +381,10 @@ async function universe() {
 
 /* Gate answers from/to windows with a payload the browser cannot read
    (no CORS header on that path), so we always ask for the last N candles. */
-async function candles(pair, tf, bars) {
+async function candles(pair, tf, bars, priority = false) {
   const rows = await api("/api/v4/spot/candlesticks", {
     currency_pair: toPair(pair), interval: tf.iv, limit: Math.min(1000, Math.max(200, bars)),
-  });
+  }, priority ? 5 : 3, priority);
   return parse(rows, tf.ms).slice(-bars);
 }
 
@@ -654,7 +664,7 @@ async function selectSymbol(symbol, tf) {
     let entry = state.charts.get(key);
     if (!entry) {
       const t = tfOf(state.tf);
-      const own = await candles(`${symbol}USDT`, { ...t, bars: 960 }, 960);
+      const own = await candles(`${symbol}USDT`, { ...t, bars: 960 }, 960, true);
       entry = { own, at: Date.now() };
       state.charts.set(key, entry);
     }
