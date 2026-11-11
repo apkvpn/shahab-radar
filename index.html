@@ -443,7 +443,7 @@ function renderSignals() {
         <span class="tag tf num">${s.tf}</span>
         ${hot ? `<span class="tag hot">تازه</span>` : ""}
         <span class="sym num">${s.symbol}</span>
-        <span class="when num">${when(s.signalTime, tfMs)}</span>
+        <span class="when num">${when(s.candleTime, tfMs)}</span>
       </span>
       <span class="nums num">
         <span>ورود <b>${fmt(s.price)}</b></span>
