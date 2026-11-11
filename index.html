@@ -75,6 +75,7 @@
   .tag{font-size:9px;font-weight:800;border-radius:5px;padding:2px 6px;background:#f1f5f9;color:#64748b;white-space:nowrap}
   .tag.long{background:var(--lime);color:#000}
   .tag.tf{background:#eef2ff;color:#4338ca}
+  .tag.hot{background:#fef2f2;color:#b91c1c}
   .sym{font-size:13px;font-weight:800}
   .when{font-size:10px;color:#9ca3af}
   .nums{font-size:10.5px;color:#475569;display:none;gap:12px;direction:ltr}
@@ -415,9 +416,10 @@ function setProgress(frac, text) {
 
 function renderSignals() {
   const box = $("signals");
+  /* newest candle first — the freshest signal always sits on top */
   const list = state.signals
     .filter(s => state.sigTf === "all" || s.tf === state.sigTf)
-    .sort((a, b) => b.signalTime - a.signalTime);
+    .sort((a, b) => (b.candleTime - a.candleTime) || (TFK.indexOf(a.tf) - TFK.indexOf(b.tf)));
   $("sigCount").textContent = `${fa(list.length)} سیگنال`;
   $("sigNote").textContent = state.strict ? "کیفیت بالا: بازگشت بالای حمایت + شیب مثبت" : "همه‌ی شکست‌های حمایت";
   if (!list.length) {
@@ -428,6 +430,7 @@ function renderSignals() {
   for (const s of list) {
     const m = state.markets.find(x => x.symbol === s.symbol);
     const tfMs = tfOf(s.tf).ms;
+    const hot = Date.now() - s.candleTime <= tfMs * 2;      // issued on the last two candles
     const price = m ? m.price : s.price;
     const t1 = price >= s.tp1, t2 = price >= s.tp2;
     const toT1 = price > 0 ? (s.tp1 / price - 1) * 100 : null;
@@ -438,6 +441,7 @@ function renderSignals() {
       <span class="who">
         <span class="tag long">LONG</span>
         <span class="tag tf num">${s.tf}</span>
+        ${hot ? `<span class="tag hot">تازه</span>` : ""}
         <span class="sym num">${s.symbol}</span>
         <span class="when num">${when(s.signalTime, tfMs)}</span>
       </span>
