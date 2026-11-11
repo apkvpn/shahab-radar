@@ -21,8 +21,10 @@
   .num{font-variant-numeric:tabular-nums;direction:ltr;unicode-bidi:isolate}
   button{font-family:inherit;cursor:pointer}
 
-  header.top{position:sticky;top:0;z-index:30;display:flex;flex-wrap:wrap;align-items:center;gap:8px;
-    padding:10px 14px;background:rgba(255,255,255,.95);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+  /* ---------- header ---------- */
+  header.top{position:sticky;top:0;z-index:30;background:rgba(255,255,255,.96);backdrop-filter:blur(10px);
+    border-bottom:1px solid var(--line)}
+  .top-row{display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:10px 14px}
   .brand{display:flex;align-items:center;gap:8px;flex:0 0 auto;direction:ltr}
   .brand .mark{width:32px;height:32px;border-radius:10px;background:#111214;display:grid;place-items:center}
   .brand b{font-size:17px;letter-spacing:-.01em}
@@ -37,9 +39,16 @@
   .btn:hover{background:#f8fafc}
   .btn.primary{background:var(--lime);border-color:var(--lime);color:#000}
   .btn.primary:hover{background:#bef264}
-  .btn:disabled{opacity:.55;cursor:default}
 
-  main{max-width:1560px;margin:0 auto;padding:12px;display:grid;gap:12px}
+  /* ---------- scan line ---------- */
+  .scanline{display:flex;align-items:center;gap:10px;padding:0 14px 9px}
+  .scanline .k{font-size:10.5px;font-weight:800;color:#475569;white-space:nowrap}
+  .scanline .bar{flex:1;height:5px;border-radius:999px;background:#eef1f5;overflow:hidden;min-width:70px}
+  .scanline .bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,#a3e635,#65a30d);transition:width .3s}
+  .scanline .t{font-size:10.5px;color:#475569;white-space:nowrap;font-weight:700}
+
+  /* ---------- cards ---------- */
+  main{max-width:1120px;margin:0 auto;padding:12px;display:grid;gap:12px}
   .card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden}
   .card h2{margin:0;font-size:13px;font-weight:800}
   .card-head{display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:10px 14px;border-bottom:1px solid var(--line)}
@@ -48,16 +57,18 @@
   .chip.green{background:#ecfdf5;color:#047857}
   .chip.blue{background:#eff6ff;color:#1d4ed8}
   .chip.red{background:#fef2f2;color:#b91c1c}
-  .chip.amber{background:#fffbeb;color:#b45309}
   .muted{color:var(--muted);font-size:11px}
 
   .tabs{display:inline-flex;gap:4px;background:#f1f3f6;border-radius:10px;padding:3px}
   .tabs button{border:0;background:transparent;border-radius:8px;padding:4px 9px;font-size:11.5px;font-weight:800;color:#64748b}
   .tabs button.on{background:#fff;color:#0b0b0c;box-shadow:0 1px 3px rgba(15,23,42,.12)}
 
-  #signals{display:block;max-height:320px;overflow:auto}
+  .note-line{padding:7px 14px;border-bottom:1px solid var(--line);background:#fbfcfd}
+
+  /* ---------- signals ---------- */
+  #signals{display:block;max-height:min(46dvh,460px);overflow:auto}
   .srow{display:grid;grid-template-columns:1fr auto;gap:4px 12px;align-items:center;width:100%;
-    padding:9px 14px;border:0;border-bottom:1px solid var(--line);background:transparent;text-align:start;transition:.12s}
+    padding:10px 14px;border:0;border-bottom:1px solid var(--line);background:transparent;text-align:start;transition:.12s}
   .srow:hover{background:#f8fafc}
   .srow:last-child{border-bottom:0}
   .srow .who{display:flex;flex-wrap:wrap;align-items:center;gap:6px;min-width:0}
@@ -70,6 +81,7 @@
   .nums b{font-weight:800}
   .dist{font-size:10.5px;font-weight:700;border-radius:999px;padding:3px 9px;white-space:nowrap}
 
+  /* ---------- chart ---------- */
   .chart-card .card-head{gap:10px}
   .sym-title{font-size:18px;font-weight:800}
   #chart{height:min(62dvh,520px);min-height:300px;width:100%}
@@ -82,58 +94,53 @@
   .acc .box .v{font-size:17px;font-weight:800;display:block}
   .acc .box .s{font-size:10px;color:#94a3b8;display:block}
 
-  .tbl-wrap{max-height:min(60dvh,620px);overflow:auto}
-  table{width:100%;border-collapse:collapse;font-size:12px}
-  thead th{position:sticky;top:0;background:#fbfcfd;color:#64748b;font-weight:700;font-size:11px;text-align:start;
-    padding:8px 10px;border-bottom:1px solid var(--line);white-space:nowrap;z-index:1}
-  tbody td{padding:7px 10px;border-bottom:1px solid #f1f3f6;white-space:nowrap}
-  tbody tr{cursor:pointer}
-  tbody tr:hover{background:#f8fafc}
-  tbody tr.sel{background:#f7fee7;box-shadow:inset 3px 0 0 #84cc16}
-  .up{color:var(--green)} .down{color:var(--red)}
-  .lit{display:inline-block;min-width:24px;height:17px;line-height:17px;text-align:center;border-radius:5px;
-    font-size:9.5px;font-weight:800;background:#f1f5f9;color:#cbd5e1;direction:ltr}
-  .lit.on{background:var(--lime);color:#000}
-  .lit.mid{background:#ecfccb;color:#4d7c0f}
-  .lit.stale{opacity:.55}
-
   .boot{padding:14px;font-size:12px;color:#475569;display:flex;align-items:center;gap:10px}
-  .bar{flex:1;height:6px;border-radius:999px;background:#eef1f5;overflow:hidden;max-width:260px}
-  .bar i{display:block;height:100%;width:0;background:var(--lime);transition:width .25s}
-  footer{max-width:1560px;margin:0 auto;padding:0 14px 18px;color:#94a3b8;font-size:11px;display:flex;flex-wrap:wrap;gap:10px}
+  footer{max-width:1120px;margin:0 auto;padding:0 14px 18px;color:#94a3b8;font-size:11px;display:flex;flex-wrap:wrap;gap:10px}
 
-  @media (min-width:760px){ .srow{grid-template-columns:minmax(0,1.1fr) minmax(0,1fr) auto} .nums{display:flex} }
-  @media (min-width:1024px){
-    main{grid-template-columns:minmax(0,1fr) 430px;align-items:start}
-    .chart-card{grid-column:1;grid-row:1} #signals-sec{grid-column:1;grid-row:2}
-    .radar-card{grid-column:2;grid-row:1/span 2;max-height:calc(100dvh - 90px)}
-  }
+  @media (min-width:760px){ .srow{grid-template-columns:minmax(0,1.05fr) minmax(0,1fr) auto} .nums{display:flex} }
 </style>
 </head>
 <body>
 
 <header class="top">
-  <div class="brand">
-    <span class="mark">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-        <circle cx="12" cy="12" r="9" stroke="#a3e635" stroke-width="1.6" opacity=".55"/>
-        <circle cx="12" cy="12" r="4.5" stroke="#a3e635" stroke-width="1.6" opacity=".85"/>
-        <path d="M12 12L19 6" stroke="#a3e635" stroke-width="2" stroke-linecap="round"/>
-        <circle cx="12" cy="12" r="1.6" fill="#a3e635"/>
-      </svg>
-    </span>
-    <b dir="ltr">Shahab <span>Radar</span></b>
+  <div class="top-row">
+    <div class="brand">
+      <span class="mark">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <circle cx="12" cy="12" r="9" stroke="#a3e635" stroke-width="1.6" opacity=".55"/>
+          <circle cx="12" cy="12" r="4.5" stroke="#a3e635" stroke-width="1.6" opacity=".85"/>
+          <path d="M12 12L19 6" stroke="#a3e635" stroke-width="2" stroke-linecap="round"/>
+          <circle cx="12" cy="12" r="1.6" fill="#a3e635"/>
+        </svg>
+      </span>
+      <b dir="ltr">Shahab <span>Radar</span></b>
+    </div>
+    <span id="status" class="pill warn"><span class="dot"></span><span id="statusText">در حال راه‌اندازی</span></span>
+    <span class="chip" id="countdown">—</span>
+    <div class="actions">
+      <span class="chip lime" id="modeChip">دقت بالا</span>
+      <button class="btn" id="mode" title="فیلتر کیفیت سیگنال">تغییر حالت</button>
+      <button class="btn primary" id="refresh">به‌روزرسانی</button>
+    </div>
   </div>
-  <span id="status" class="pill warn"><span class="dot"></span><span id="statusText">در حال راه‌اندازی</span></span>
-  <span class="chip num" id="countdown">—</span>
-  <div class="actions">
-    <span class="chip lime" id="modeChip">دقت بالا</span>
-    <button class="btn" id="mode" title="فیلتر کیفیت سیگنال">تغییر حالت</button>
-    <button class="btn primary" id="refresh">به‌روزرسانی</button>
+  <div class="scanline">
+    <span class="k">پیشرفت اسکن</span>
+    <span class="bar"><i id="scanBar"></i></span>
+    <span class="t" id="scanText">در حال دریافت بازارها…</span>
   </div>
 </header>
 
 <main>
+  <section class="card" id="signals-sec">
+    <div class="card-head">
+      <h2>سیگنال‌های بازار</h2>
+      <span class="chip lime" id="sigCount">—</span>
+      <span class="tabs" id="sigTabs" style="margin-inline-start:auto"></span>
+    </div>
+    <div class="note-line"><span class="muted" id="sigNote"></span></div>
+    <div id="signals"><div class="boot"><span>در حال ساخت فهرست سیگنال‌ها…</span></div></div>
+  </section>
+
   <section class="card chart-card">
     <div class="card-head">
       <span class="sym-title num" id="chartSym">—</span>
@@ -146,32 +153,6 @@
     <div id="chart"></div>
     <div class="stats" id="stats"></div>
     <div class="acc" id="acc"></div>
-  </section>
-
-  <section class="card" id="signals-sec">
-    <div class="card-head">
-      <h2>سیگنال‌های بازار</h2>
-      <span class="tabs" id="sigTabs"></span>
-      <span class="chip" id="sigCount">—</span>
-      <span class="muted" id="sigNote" style="margin-inline-start:auto"></span>
-    </div>
-    <div id="signals"><div class="boot"><span>در حال ساخت فهرست سیگنال‌ها…</span><span class="bar"><i id="sigBar"></i></span></div></div>
-  </section>
-
-  <section class="card radar-card">
-    <div class="card-head">
-      <h2>رادار بازار</h2>
-      <input id="search" type="search" placeholder="جستجوی ارز…" aria-label="جستجو"
-        style="margin-inline-start:auto;height:32px;width:132px;border:1px solid var(--line);border-radius:9px;padding:0 10px;font-size:12px;outline:none">
-      <button class="btn" id="onlyLong" style="padding:5px 10px;font-size:12px">فقط سیگنال‌دار</button>
-    </div>
-    <div class="tbl-wrap">
-      <table>
-        <thead><tr><th>#</th><th>ارز</th><th>قیمت</th><th>۲۴س</th><th>۱۵m</th><th>۱h</th><th>۴h</th><th>۱d</th></tr></thead>
-        <tbody id="rows"></tbody>
-      </table>
-    </div>
-    <div class="boot" id="scanBoot"><span id="scanText">در حال دریافت بازارها…</span><span class="bar"><i id="scanBar"></i></span></div>
   </section>
 </main>
 
@@ -303,7 +284,7 @@ function statsOf(settled) {
    ============================================================================ */
 const HOST = "https://api.gateio.ws";
 const UNIVERSE = 1000;   // top markets by 24h quote volume
-const BATCH = 110;       // markets scanned per one-minute tick
+const BATCH = 110;       // markets scanned per pass
 const TTL = 20 * 60_000, CONC = 6;   // requests are paced by the api() queue
 const TF = [
   { k: "15m", iv: "15m", ms: 900e3,   bars: 500, label: "۱۵m" },
@@ -317,7 +298,6 @@ const STABLE = new Set("usdt usdc dai tusd busd fdusd usde usds usdd pyusd usdg 
 
 const toPair = s => s.includes("_") ? s.toUpperCase() : `${s.replace(/USDT$/i, "")}_USDT`.toUpperCase();
 const sleep = ms => new Promise(r => setTimeout(r, ms));
-const nowSec = () => Math.floor(Date.now() / 1000);
 
 /* Gate throttles a browser that fires thousands of calls, and a refused call
    arrives without CORS headers. Every request therefore takes a slot in one
@@ -428,6 +408,11 @@ function paintStatus(text, tone) {
   $("statusText").textContent = text;
 }
 
+function setProgress(frac, text) {
+  $("scanBar").style.width = `${Math.round(Math.min(1, Math.max(0, frac)) * 100)}%`;
+  if (text) $("scanText").textContent = text;
+}
+
 function renderSignals() {
   const box = $("signals");
   const list = state.signals
@@ -466,7 +451,7 @@ function renderSignals() {
     b.onclick = () => {
       state.tf = s.tf;
       $("chartSym").scrollIntoView({ behavior: "smooth", block: "center" });
-      renderAll();
+      renderTabs(); renderSignals();
       selectSymbol(s.symbol, s.tf, Math.floor(s.signalTime / 1000));
     };
     frag.appendChild(b);
@@ -475,56 +460,8 @@ function renderSignals() {
   box.appendChild(frag);
 }
 
-/* radar order: daily signal first, then 4h, 1h, 15m, then everything else by volume */
-const PRIORITY = ["1d", "4h", "1h", "15m"];
-function rankOf(m) {
-  for (let i = 0; i < PRIORITY.length; i++) if (m.sigs?.[PRIORITY[i]]) return i;
-  return PRIORITY.length;
-}
-
-function renderRows() {
-  const q = ($("search").value || "").trim().toUpperCase();
-  const only = $("onlyLong").dataset.on === "1";
-  const body = $("rows");
-  const bySymbol = new Map(state.markets.map(m => [m.symbol, m]));
-  const list = state.markets
-    .map(m => ({ m, r: rankOf(m) }))
-    .sort((a, b) => a.r - b.r || b.m.volume - a.m.volume);
-  const frag = document.createDocumentFragment();
-  let n = 0;
-  for (const { m, r } of list) {
-    if (q && !m.symbol.includes(q)) continue;
-    if (only && r === PRIORITY.length) continue;
-    const tr = document.createElement("tr");
-    tr.dataset.symbol = m.symbol;
-    if (state.selected === m.symbol) tr.className = "sel";
-    const cells = TFK.map(k => {
-      const s = m.sigs?.[k];
-      if (!s) return `<td><span class="lit">·</span></td>`;
-      const fresh = Date.now() - s.signalTime <= tfOf(k).ms * 3;
-      const short = k === "15m" ? "15" : k === "1h" ? "1h" : k === "4h" ? "4h" : "1d";
-      return `<td><span class="lit ${s.quality ? "on" : "mid"}${fresh ? "" : " stale"}" title="${when(s.signalTime, tfOf(k).ms)}">${short}</span></td>`;
-    }).join("");
-    tr.innerHTML = `
-      <td class="num muted">${++n}</td>
-      <td class="num" style="font-weight:800">${m.symbol}</td>
-      <td class="num">${fmt(m.price)}</td>
-      <td class="num ${m.change == null ? "" : m.change >= 0 ? "up" : "down"}">${pct(m.change)}</td>
-      ${cells}`;
-    tr.onclick = () => selectSymbol(m.symbol, state.tf);
-    frag.appendChild(tr);
-  }
-  body.innerHTML = "";
-  body.appendChild(frag);
-}
-
-function setProgress(frac, text) {
-  $("scanBar").style.width = `${Math.round(Math.min(1, frac) * 100)}%`;
-  if (text) $("scanText").textContent = text;
-}
-
 /* ============================================================================
-   SCAN — one rotating slice per minute across the top markets
+   SCAN — continuous sweep of every market, one minute rest, repeat
    ============================================================================ */
 async function loadUniverse(force) {
   const cached = !force && loadCache();
@@ -532,7 +469,7 @@ async function loadUniverse(force) {
     state.markets = cached.markets; state.signals = cached.signals || [];
     state.at = cached.at; state.cursor = cached.cursor || 0; state.round = cached.round || 0;
     state.total = cached.markets.length; state.scanned = cached.markets.filter(m => m.scannedAt).length;
-    renderAll(); $("scanBoot").style.display = "none";
+    renderAll();
     paintStatus("زنده", "live");
     if (Date.now() - cached.at < 60_000) return;
   }
@@ -557,7 +494,6 @@ async function scanSlice() {
   if (state.busy || !state.markets.length) return;
   state.busy = true;
   paintStatus("در حال اسکن", "warn");
-  $("scanBoot").style.display = "flex";
   const total = state.markets.length;
   const start = state.cursor % total;
   const slice = [];
@@ -593,9 +529,9 @@ async function scanSlice() {
         m.scannedAt = Date.now();
       } catch (e) { /* a market that fails keeps its previous state */ }
       done++; state.scanned++; state.scannedRound++;
-      setProgress((state.scannedRound % BATCH) / slice.length,
+      setProgress(state.scannedRound / slice.length,
         `دور ${fa(state.round + 1)} · ${fa(state.scannedRound)} از ${fa(total)} بازار`);
-      if (done % 12 === 0) { rebuildSignals(); renderRows(); renderSignals(); }
+      if (done % 12 === 0) { rebuildSignals(); renderSignals(); }
     }
   };
   await Promise.all(Array.from({ length: CONC }, worker));
@@ -603,7 +539,6 @@ async function scanSlice() {
 
   rebuildSignals();
   renderAll();
-  $("scanBoot").style.display = "none";
   paintStatus("زنده", "live");
   state.at = Date.now();
   snap = { at: state.at, cursor: state.cursor, round: state.round, markets: state.markets, signals: state.signals };
@@ -663,7 +598,7 @@ async function selectSymbol(symbol, tf, focusT) {
   if (tf) state.tf = tf;
   state.focusT = focusT == null ? null : focusT;
   const seq = ++state.drawSeq;                 // a slower earlier load must not overwrite the chart
-  renderRows(); renderTabs();
+  renderTabs();
   $("chartSym").textContent = symbol;
   $("chartState").textContent = "…";
   $("stats").innerHTML = `<span class="muted">در حال بارگذاری تاریخچه…</span>`;
@@ -800,7 +735,7 @@ function renderTabs() {
 }
 
 function renderAll() {
-  renderTabs(); renderRows(); renderSignals();
+  renderTabs(); renderSignals();
   $("updated").textContent = state.total
     ? `دور ${fa(state.round + 1)} · ${fa(Math.min(state.scannedRound, state.total))} از ${fa(state.total)} بازار`
     : "—";
@@ -818,17 +753,9 @@ function tickCountdown() {
 $("refresh").onclick = async () => {
   localStorage.removeItem(KEY);
   state.charts.clear(); state.cursor = 0; state.round = 0; state.scanned = 0;
-  $("scanBoot").style.display = "flex";
   setProgress(0, "در حال دریافت بازارها…");
   await loadUniverse(true);
   runRounds();
-};
-$("search").oninput = renderRows;
-$("onlyLong").onclick = () => {
-  const on = $("onlyLong").dataset.on === "1";
-  $("onlyLong").dataset.on = on ? "0" : "1";
-  $("onlyLong").classList.toggle("primary", !on);
-  renderRows();
 };
 $("mode").onclick = async () => {
   state.strict = !state.strict;
@@ -836,7 +763,7 @@ $("mode").onclick = async () => {
   if (state.selected) selectSymbol(state.selected, state.tf);
   state.markets.forEach(m => { m.sigs = {}; });
   rebuildSignals();
-  renderRows(); renderSignals();
+  renderSignals();
   localStorage.removeItem(KEY);
   state.cursor = 0; state.round = 0; state.scannedRound = 0;
   runRounds();
@@ -847,13 +774,12 @@ window.__radar = { state, candles, toPair, analyze, scanSlice, loadUniverse };
 (async function boot() {
   initChart();
   renderTabs();
-  renderRows();
   tickCountdown();
   try {
     await loadUniverse(false);
   } catch (e) {
     paintStatus("خطا در اتصال", "warn");
-    $("scanText").textContent = "دسترسی به Gate.io برقرار نشد؛ دوباره تلاش کنید.";
+    setProgress(0, "دسترسی به Gate.io برقرار نشد؛ دوباره تلاش کنید.");
   }
   runRounds();                           // full 1000-market sweep, 1 minute rest, repeat
   setInterval(tickCountdown, 15_000);
