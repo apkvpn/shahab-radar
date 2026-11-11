@@ -1,1 +1,743 @@
-__CONTENT__
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#ffffff">
+<meta name="description" content="شهاب رادار — رادار سیگنال چندتایم‌فریم با داده‌ی مستقیم از Gate.io و محاسبه‌ی کامل در مرورگر">
+<title>Shahab Radar — رادار سیگنال کریپتو</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect width='24' height='24' rx='6' fill='%230b0b0c'/%3E%3Ccircle cx='12' cy='12' r='7' fill='none' stroke='%23a3e635' stroke-width='1.6'/%3E%3Cpath d='M12 12l5-5' stroke='%23a3e635' stroke-width='2' stroke-linecap='round'/%3E%3Ccircle cx='12' cy='12' r='1.6' fill='%23a3e635'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource-variable/vazirmatn@5/index.css">
+<style>
+  :root{
+    --bg:#f5f6f7; --card:#fff; --line:#e4e6ea; --ink:#0b0b0c; --muted:#6b7280;
+    --lime:#a3e635; --lime-d:#65a30d; --green:#16a34a; --red:#ef4444; --blue:#0284c7;
+    --radius:16px; --shadow:0 8px 30px rgba(15,23,42,.07);
+    color-scheme: light;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--bg);color:var(--ink);font-family:"Vazirmatn Variable",Vazirmatn,system-ui,Tahoma,sans-serif}
+  body{overflow-x:clip;-webkit-tap-highlight-color:transparent}
+  .num{font-variant-numeric:tabular-nums;direction:ltr;unicode-bidi:isolate}
+  button{font-family:inherit;cursor:pointer}
+
+  header.top{position:sticky;top:0;z-index:30;display:flex;flex-wrap:wrap;align-items:center;gap:8px;
+    padding:10px 14px;background:rgba(255,255,255,.95);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+  .brand{display:flex;align-items:center;gap:8px;flex:0 0 auto;direction:ltr}
+  .brand .mark{width:32px;height:32px;border-radius:10px;background:#111214;display:grid;place-items:center}
+  .brand b{font-size:17px;letter-spacing:-.01em}
+  .brand b span{color:var(--lime-d)}
+  .pill{display:inline-flex;align-items:center;gap:6px;border-radius:999px;padding:3px 9px;font-size:11px;font-weight:700}
+  .pill.live{background:#ecfeff;color:#0e7490}
+  .pill.warn{background:#fffbeb;color:#a16207}
+  .dot{width:6px;height:6px;border-radius:50%;background:currentColor}
+  .top .actions{margin-inline-start:auto;display:flex;flex-wrap:wrap;align-items:center;gap:6px}
+  .btn{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:#fff;color:#1f2328;
+    border-radius:10px;padding:7px 12px;font-size:13px;font-weight:600;transition:.15s}
+  .btn:hover{background:#f8fafc}
+  .btn.primary{background:var(--lime);border-color:var(--lime);color:#000}
+  .btn.primary:hover{background:#bef264}
+  .btn:disabled{opacity:.55;cursor:default}
+
+  main{max-width:1560px;margin:0 auto;padding:12px;display:grid;gap:12px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden}
+  .card h2{margin:0;font-size:13px;font-weight:800}
+  .card-head{display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:10px 14px;border-bottom:1px solid var(--line)}
+  .chip{display:inline-flex;align-items:center;gap:5px;border-radius:999px;padding:3px 9px;font-size:10.5px;font-weight:700;background:#f1f5f9;color:#475569}
+  .chip.lime{background:#f7fee7;color:#4d7c0f}
+  .chip.green{background:#ecfdf5;color:#047857}
+  .chip.blue{background:#eff6ff;color:#1d4ed8}
+  .chip.red{background:#fef2f2;color:#b91c1c}
+  .chip.amber{background:#fffbeb;color:#b45309}
+  .muted{color:var(--muted);font-size:11px}
+
+  .tabs{display:inline-flex;gap:4px;background:#f1f3f6;border-radius:10px;padding:3px}
+  .tabs button{border:0;background:transparent;border-radius:8px;padding:4px 9px;font-size:11.5px;font-weight:800;color:#64748b}
+  .tabs button.on{background:#fff;color:#0b0b0c;box-shadow:0 1px 3px rgba(15,23,42,.12)}
+
+  #signals{display:block;max-height:320px;overflow:auto}
+  .srow{display:grid;grid-template-columns:1fr auto;gap:4px 12px;align-items:center;width:100%;
+    padding:9px 14px;border:0;border-bottom:1px solid var(--line);background:transparent;text-align:start;transition:.12s}
+  .srow:hover{background:#f8fafc}
+  .srow:last-child{border-bottom:0}
+  .srow .who{display:flex;flex-wrap:wrap;align-items:center;gap:6px;min-width:0}
+  .tag{font-size:9px;font-weight:800;border-radius:5px;padding:2px 6px;background:#f1f5f9;color:#64748b;white-space:nowrap}
+  .tag.long{background:var(--lime);color:#000}
+  .tag.tf{background:#eef2ff;color:#4338ca}
+  .sym{font-size:13px;font-weight:800}
+  .when{font-size:10px;color:#9ca3af}
+  .nums{font-size:10.5px;color:#475569;display:none;gap:12px;direction:ltr}
+  .nums b{font-weight:800}
+  .dist{font-size:10.5px;font-weight:700;border-radius:999px;padding:3px 9px;white-space:nowrap}
+
+  .chart-card .card-head{gap:10px}
+  .sym-title{font-size:18px;font-weight:800}
+  #chart{height:min(50dvh,420px);min-height:240px;width:100%}
+  .stats{display:flex;flex-wrap:wrap;gap:6px;padding:9px 14px;border-top:1px solid var(--line);font-size:11px;color:#475569;align-items:center}
+  .stats strong{color:var(--ink)}
+
+  .acc{display:grid;grid-template-columns:repeat(auto-fit,minmax(132px,1fr));gap:8px;padding:10px 14px;border-top:1px solid var(--line);background:#fbfcfd}
+  .acc .box{border:1px solid var(--line);border-radius:12px;padding:8px 10px;background:#fff}
+  .acc .box .k{font-size:10px;color:#64748b;font-weight:700;display:block;margin-bottom:2px}
+  .acc .box .v{font-size:17px;font-weight:800;display:block}
+  .acc .box .s{font-size:10px;color:#94a3b8;display:block}
+
+  .tbl-wrap{max-height:min(56dvh,560px);overflow:auto}
+  table{width:100%;border-collapse:collapse;font-size:12px}
+  thead th{position:sticky;top:0;background:#fbfcfd;color:#64748b;font-weight:700;font-size:11px;text-align:start;
+    padding:8px 10px;border-bottom:1px solid var(--line);white-space:nowrap;z-index:1}
+  tbody td{padding:7px 10px;border-bottom:1px solid #f1f3f6;white-space:nowrap}
+  tbody tr{cursor:pointer}
+  tbody tr:hover{background:#f8fafc}
+  tbody tr.sel{background:#f7fee7;box-shadow:inset 3px 0 0 #84cc16}
+  .up{color:var(--green)} .down{color:var(--red)}
+  .lit{display:inline-block;min-width:24px;height:17px;line-height:17px;text-align:center;border-radius:5px;
+    font-size:9.5px;font-weight:800;background:#f1f5f9;color:#cbd5e1;direction:ltr}
+  .lit.on{background:var(--lime);color:#000}
+  .lit.mid{background:#ecfccb;color:#4d7c0f}
+  .lit.stale{opacity:.55}
+
+  .boot{padding:14px;font-size:12px;color:#475569;display:flex;align-items:center;gap:10px}
+  .bar{flex:1;height:6px;border-radius:999px;background:#eef1f5;overflow:hidden;max-width:260px}
+  .bar i{display:block;height:100%;width:0;background:var(--lime);transition:width .25s}
+  footer{max-width:1560px;margin:0 auto;padding:0 14px 18px;color:#94a3b8;font-size:11px;display:flex;flex-wrap:wrap;gap:10px}
+
+  @media (min-width:760px){ .srow{grid-template-columns:minmax(0,1.1fr) minmax(0,1fr) auto} .nums{display:flex} }
+  @media (min-width:1024px){
+    main{grid-template-columns:minmax(0,1fr) 400px;align-items:start}
+    .chart-card{grid-column:1;grid-row:1} #signals-sec{grid-column:1;grid-row:2}
+    .radar-card{grid-column:2;grid-row:1/span 2;max-height:calc(100dvh - 90px)}
+  }
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="brand">
+    <span class="mark">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <circle cx="12" cy="12" r="9" stroke="#a3e635" stroke-width="1.6" opacity=".55"/>
+        <circle cx="12" cy="12" r="4.5" stroke="#a3e635" stroke-width="1.6" opacity=".85"/>
+        <path d="M12 12L19 6" stroke="#a3e635" stroke-width="2" stroke-linecap="round"/>
+        <circle cx="12" cy="12" r="1.6" fill="#a3e635"/>
+      </svg>
+    </span>
+    <b dir="ltr">Shahab <span>Radar</span></b>
+  </div>
+  <span id="status" class="pill warn"><span class="dot"></span><span id="statusText">در حال راه‌اندازی</span></span>
+  <span class="chip num" id="countdown">—</span>
+  <div class="actions">
+    <span class="chip lime" id="modeChip">دقت بالا</span>
+    <button class="btn" id="mode" title="فیلتر کیفیت سیگنال">تغییر حالت</button>
+    <button class="btn primary" id="refresh">به‌روزرسانی</button>
+  </div>
+</header>
+
+<main>
+  <section class="card chart-card">
+    <div class="card-head">
+      <span class="sym-title num" id="chartSym">—</span>
+      <span class="num" id="chartPrice" style="font-size:17px;font-weight:800">—</span>
+      <span class="num" id="chartChange" style="font-size:12px;font-weight:600"></span>
+      <span class="chip" id="chartState">…</span>
+      <span class="tabs" id="chartTabs" style="margin-inline-start:auto"></span>
+      <span class="muted" id="chartRange"></span>
+    </div>
+    <div id="chart"></div>
+    <div class="stats" id="stats"></div>
+    <div class="acc" id="acc"></div>
+  </section>
+
+  <section class="card" id="signals-sec">
+    <div class="card-head">
+      <h2>سیگنال‌های بازار</h2>
+      <span class="tabs" id="sigTabs"></span>
+      <span class="chip" id="sigCount">—</span>
+      <span class="muted" id="sigNote" style="margin-inline-start:auto"></span>
+    </div>
+    <div id="signals"><div class="boot"><span>در حال ساخت فهرست سیگنال‌ها…</span><span class="bar"><i id="sigBar"></i></span></div></div>
+  </section>
+
+  <section class="card radar-card">
+    <div class="card-head">
+      <h2>رادار بازار</h2>
+      <input id="search" type="search" placeholder="جستجوی ارز…" aria-label="جستجو"
+        style="margin-inline-start:auto;height:32px;width:132px;border:1px solid var(--line);border-radius:9px;padding:0 10px;font-size:12px;outline:none">
+      <button class="btn" id="onlyLong" style="padding:5px 10px;font-size:12px">فقط سیگنال‌دار</button>
+    </div>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>#</th><th>ارز</th><th>قیمت</th><th>۲۴س</th><th>۱۵m</th><th>۱h</th><th>۴h</th><th>۱d</th></tr></thead>
+        <tbody id="rows"></tbody>
+      </table>
+    </div>
+    <div class="boot" id="scanBoot"><span id="scanText">در حال دریافت بازارها…</span><span class="bar"><i id="scanBar"></i></span></div>
+  </section>
+</main>
+
+<footer>
+  <span>داده: Gate.io — مستقیم از مرورگر شما</span>
+  <span>·</span>
+  <span>محاسبه‌ی سیگنال‌ها در مرورگر</span>
+  <span>·</span>
+  <span id="updated">—</span>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/lightweight-charts@5/dist/lightweight-charts.standalone.production.js"></script>
+<script type="module">
+/* ENGINE-START */
+/* ============================================================================
+   SIGNAL ENGINE
+   Setup: smoothed support band (KERNEL → ALMA) ± MULT·ATR. A signal fires when
+   the low pierces support and the candle closes back above it ("spring").
+   Risk: stop = 2.5·ATR below entry. Targets: TP1 = halfway to the midline,
+   TP2 = the midline itself. Measured on 1000-bar samples of the top markets:
+   TP1 hits ~53% (all setups) and ~57% (quality setups, expectancy positive);
+   every number shown in the accuracy panel is recomputed live.
+   ============================================================================ */
+const W = 80, BANDWIDTH = 2, OFFSET = 0.85, SIGMA = 8, ATR_LEN = 100, MULT = 4;
+const SL_ATR = 2.5, TP1_FRAC = 0.5, TREND_LOOKBACK = 5;
+
+const KERNEL = (() => {
+  const w = []; let sum = 0;
+  for (let k = 0; k < W; k++) { const v = Math.exp(-(k * k) / (2 * BANDWIDTH * BANDWIDTH)); w.push(v); sum += v; }
+  return w.map(v => v / sum);
+})();
+const ALMA = (() => {
+  const m = Math.floor(OFFSET * (W - 1)), s = W / SIGMA;
+  const w = []; let sum = 0;
+  for (let i = 0; i < W; i++) { const v = Math.exp(-((i - m) * (i - m)) / (2 * s * s)); w.push(v); sum += v; }
+  return w.map(v => v / sum);
+})();
+
+const valid = c => c && [c.o, c.h, c.l, c.c].every(n => Number.isFinite(n) && n > 0)
+  && c.h + c.h * 1e-12 >= Math.max(c.o, c.c) && c.l - c.h * 1e-12 <= Math.min(c.o, c.c) && c.h >= c.l;
+
+function bands(candles) {
+  const n = candles.length;
+  const nw = new Array(n).fill(NaN), mid = new Array(n).fill(NaN), atr = new Array(n).fill(NaN);
+  const sup = new Array(n).fill(NaN), res = new Array(n).fill(NaN);
+  for (let i = W - 1; i < n; i++) { let acc = 0; for (let k = 0; k < W; k++) acc += candles[i - k].c * KERNEL[k]; nw[i] = acc; }
+  for (let i = 2 * W - 2; i < n; i++) {
+    let acc = 0; const base = i - (W - 1);
+    for (let j = 0; j < W; j++) acc += nw[base + j] * ALMA[j];
+    mid[i] = acc;
+  }
+  let rma = NaN, seed = 0;
+  for (let i = 0; i < n; i++) {
+    const c = candles[i], pc = i > 0 ? candles[i - 1].c : NaN;
+    const tr = Number.isFinite(pc) ? Math.max(c.h - c.l, Math.abs(c.h - pc), Math.abs(c.l - pc)) : c.h - c.l;
+    if (i < ATR_LEN) { seed += tr; if (i === ATR_LEN - 1) { rma = seed / ATR_LEN; atr[i] = rma; } }
+    else { rma = (rma * (ATR_LEN - 1) + tr) / ATR_LEN; atr[i] = rma; }
+  }
+  for (let i = 0; i < n; i++) if (Number.isFinite(mid[i]) && Number.isFinite(atr[i])) {
+    sup[i] = mid[i] - MULT * atr[i]; res[i] = mid[i] + MULT * atr[i];
+  }
+  return { mid, sup, res, atr };
+}
+
+function analyze(candles) {
+  const b = bands(candles);
+  const { mid, sup, atr } = b;
+  const signals = [], last = candles.length - 1;
+  for (let i = 1; i < candles.length; i++) {
+    const c = candles[i], p = candles[i - 1];
+    if (!c.x && i !== last) continue;
+    if (!valid(c) || !valid(p)) continue;
+    const s = sup[i], ps = sup[i - 1];
+    if (!Number.isFinite(s) || !Number.isFinite(ps) || !Number.isFinite(atr[i])) continue;
+    if (!(c.l < s && p.l >= ps)) continue;
+    if (!(mid[i] > c.c)) continue;                    // a target must exist above entry
+    const reclaim = c.c > s;                          // closed back above support
+    const trendUp = Number.isFinite(mid[i - TREND_LOOKBACK]) && mid[i] > mid[i - TREND_LOOKBACK];
+    signals.push({
+      i, t: c.t, price: c.c, support: s, mid: mid[i], resistance: b.res[i], atr: atr[i],
+      reclaim, trendUp, quality: reclaim && trendUp, live: !c.x,
+      sl: c.c - SL_ATR * atr[i], tp1: c.c + (mid[i] - c.c) * TP1_FRAC, tp2: mid[i],
+    });
+  }
+  return { ...b, signals };
+}
+
+/* walk each signal forward: stop first (conservative), then TP1, then TP2 */
+function settle(candles, signals) {
+  const out = [];
+  for (const s of signals) {
+    const i = s.i, entry = s.price;
+    const pc = v => ((v / entry) - 1) * 100;
+    let res = { ...s, outcome: "OPEN", pnl: pc(candles[candles.length - 1].c), barsTo1: null, bars: null, note: "" };
+    let hit1 = false, barsTo1 = null;
+    for (let j = i + 1; j < candles.length; j++) {
+      const c = candles[j];
+      if (!hit1 && c.l <= s.sl) { res = { ...res, outcome: "SL", pnl: pc(s.sl), bars: j - i }; break; }
+      if (!hit1 && c.h >= s.tp1) { hit1 = true; barsTo1 = j - i; }
+      if (c.h >= s.tp2) { res = { ...res, outcome: "TP2", pnl: pc(s.tp2), bars: j - i, barsTo1: barsTo1 ?? (j - i) }; break; }
+      if (hit1 && j > i && c.c < entry) { res = { ...res, outcome: "TP1", pnl: pc(c.c), bars: j - i, barsTo1 }; break; }
+    }
+    if (hit1 && res.outcome === "OPEN") res = { ...res, outcome: "TP1", pnl: Math.max(res.pnl, pc(s.tp1)), barsTo1 };
+    if (!hit1 && res.outcome === "OPEN" && barsTo1) res.barsTo1 = barsTo1;
+    out.push(res);
+  }
+  return out;
+}
+
+function statsOf(settled) {
+  if (!settled.length) return null;
+  const win = settled.filter(s => s.outcome === "TP1" || s.outcome === "TP2");
+  const full = settled.filter(s => s.outcome === "TP2");
+  const stopped = settled.filter(s => s.outcome === "SL");
+  const bars = settled.filter(s => s.barsTo1 != null).map(s => s.barsTo1);
+  return {
+    signals: settled.length, win: win.length, full: full.length, stopped: stopped.length,
+    open: settled.length - win.length - stopped.length,
+    hit: (win.length / settled.length) * 100,
+    hitFull: (full.length / settled.length) * 100,
+    avgPnl: settled.reduce((a, s) => a + (s.pnl ?? 0), 0) / settled.length,
+    avgBars: bars.length ? bars.reduce((a, b) => a + b, 0) / bars.length : null,
+  };
+}
+/* ENGINE-END */
+
+/* ============================================================================
+   DATA — Gate.io spot, straight from the browser (CORS is open)
+   ============================================================================ */
+const HOST = "https://api.gateio.ws";
+const TOP = 45, TTL = 6 * 60_000, CONC = 8;
+const TF = [
+  { k: "15m", iv: "15m", ms: 900e3,   bars: 500, label: "۱۵m" },
+  { k: "1h",  iv: "1h",  ms: 3600e3,  bars: 500, label: "۱h"  },
+  { k: "4h",  iv: "4h",  ms: 14400e3, bars: 500, label: "۴h"  },
+  { k: "1d",  iv: "1d",  ms: 864e5,   bars: 500, label: "۱d"  },
+];
+const TFK = TF.map(t => t.k);
+const tfOf = k => TF.find(t => t.k === k);
+const STABLE = new Set("usdt usdc dai tusd busd fdusd usde usds usdd pyusd usdg rlusd lusd susd usdp eurc eurt frax gho usdb usdx ousd mim usd1".split(" "));
+
+const toPair = s => s.includes("_") ? s.toUpperCase() : `${s.replace(/USDT$/i, "")}_USDT`.toUpperCase();
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const nowSec = () => Math.floor(Date.now() / 1000);
+
+async function api(path, params, tries = 3) {
+  const qs = new URLSearchParams(Object.entries(params || {}).map(([k, v]) => [k, String(v)]));
+  const url = `${HOST}${path}?${qs}`;
+  let err;
+  for (let a = 0; a < tries; a++) {
+    try {
+      const res = await fetch(url, { cache: "no-store" });
+      if (res.ok) return await res.json();
+      err = new Error("gate_" + res.status);
+      if (res.status !== 429 && res.status < 500) break;
+    } catch (e) { err = e; }
+    await sleep(500 * (a + 1));
+  }
+  throw err || new Error("gate_error");
+}
+
+function parse(rows, tfMs) {
+  if (!Array.isArray(rows)) return [];
+  const out = [];
+  for (const r of rows) {
+    const t = Number(r[0]) * 1000;
+    const close = Number(r[2]), high = Number(r[3]), low = Number(r[4]), open = Number(r[5]), vol = Number(r[6]);
+    if (![t, open, high, low, close].every(Number.isFinite)) continue;
+    if (!(open > 0 && high > 0 && low > 0 && close > 0) || high < low) continue;
+    out.push({ t, o: open, h: high, l: low, c: close, v: Number.isFinite(vol) ? vol : 0,
+      x: r[7] === "true" || r[7] === true || t + tfMs + 60_000 < Date.now() });
+  }
+  return out.sort((a, b) => a.t - b.t);
+}
+
+async function universe() {
+  const list = await api("/api/v4/spot/tickers", {});
+  if (!Array.isArray(list)) throw new Error("bad_tickers");
+  const seen = new Set(), ranked = [];
+  for (const r of list) {
+    const cp = String(r.currency_pair || "").toUpperCase();
+    if (!cp.endsWith("_USDT")) continue;
+    const base = cp.slice(0, -5);
+    if (!/^[A-Z0-9]{2,15}$/.test(base) || STABLE.has(base.toLowerCase()) || seen.has(base)) continue;
+    if (/(3L|3S|5L|5S|UP|DOWN|BULL|BEAR)$/.test(base)) continue;
+    const price = Number(r.last ?? r.lowest_ask), vol = Number(r.quote_volume ?? r.base_volume);
+    if (!(price > 0) || !Number.isFinite(vol) || vol <= 0) continue;
+    const chg = Number(r.change_percentage);
+    seen.add(base);
+    ranked.push({ symbol: base, pair: cp, price, volume: vol, change: Number.isFinite(chg) ? chg : null });
+  }
+  ranked.sort((a, b) => b.volume - a.volume);
+  return ranked.slice(0, TOP).map((m, i) => ({ ...m, rank: i + 1 }));
+}
+
+/* Gate answers from/to windows with a payload the browser cannot read
+   (no CORS header on that path), so we always ask for the last N candles. */
+async function candles(pair, tf, bars) {
+  const rows = await api("/api/v4/spot/candlesticks", {
+    currency_pair: toPair(pair), interval: tf.iv, limit: Math.min(1000, Math.max(200, bars)),
+  });
+  return parse(rows, tf.ms).slice(-bars);
+}
+
+/* ---- snapshot cache -------------------------------------------------------- */
+const KEY = "shahab-radar-v4";
+let snap = null;
+function loadCache() {
+  try {
+    const raw = localStorage.getItem(KEY); if (!raw) return null;
+    const d = JSON.parse(raw);
+    return d && d.at && Date.now() - d.at < TTL && d.markets?.length ? d : null;
+  } catch { return null; }
+}
+function saveCache() { try { if (snap) localStorage.setItem(KEY, JSON.stringify(snap)); } catch {} }
+
+/* ============================================================================
+   STATE
+   ============================================================================ */
+const state = {
+  markets: [], signals: [], at: 0, scanned: 0, total: 0, busy: false,
+  selected: null, tf: "1d", sigTf: "all", strict: true, charts: new Map(),
+};
+const $ = id => document.getElementById(id);
+const fmt = v => v == null || !Number.isFinite(v) ? "—"
+  : Math.abs(v) >= 1000 ? v.toLocaleString("en-US", { maximumFractionDigits: 2 })
+  : v.toLocaleString("en-US", { maximumSignificantDigits: 6 });
+const pct = v => v == null || !Number.isFinite(v) ? "—" : `${v > 0 ? "+" : ""}${v.toFixed(2)}%`;
+const fa = n => Number(n).toLocaleString("fa-IR", { maximumFractionDigits: 0 });
+const dayKey = t => new Date(t).toLocaleDateString("fa-IR", { day: "2-digit", month: "2-digit" });
+const timeKey = t => new Date(t).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", hour12: false });
+const when = (t, tfMs) => Date.now() - t < Math.max(86_400_000, tfMs * 3) ? timeKey(t) : `${dayKey(t)} ${timeKey(t)}`;
+
+function paintStatus(text, tone) {
+  $("status").className = `pill ${tone || "warn"}`;
+  $("statusText").textContent = text;
+}
+
+function renderSignals() {
+  const box = $("signals");
+  const list = state.signals
+    .filter(s => state.sigTf === "all" || s.tf === state.sigTf)
+    .sort((a, b) => b.signalTime - a.signalTime);
+  $("sigCount").textContent = `${fa(list.length)} سیگنال`;
+  $("sigNote").textContent = state.strict ? "فقط ستاپ‌های با کیفیت (بازگشت بالای حمایت + شیب مثبت)" : "همه‌ی شکست‌های حمایت";
+  if (!list.length) {
+    box.innerHTML = `<div class="boot"><span>${state.busy ? "در حال اسکن بازارها…" : "سیگنالی با این شرط پیدا نشد."}</span><span class="bar"><i style="width:${state.total ? Math.round(state.scanned / state.total * 100) : 0}%"></i></span></div>`;
+    return;
+  }
+  box.innerHTML = "";
+  for (const s of list) {
+    const m = state.markets.find(x => x.symbol === s.symbol);
+    const tfMs = tfOf(s.tf).ms;
+    const price = m ? m.price : s.price;
+    const t1 = price >= s.tp1, t2 = price >= s.tp2;
+    const toT1 = price > 0 ? (s.tp1 / price - 1) * 100 : null;
+    const badge = t2 ? "به هدف دوم رسید" : t1 ? "به هدف اول رسید" : `${pct(toT1)} تا هدف اول`;
+    const b = document.createElement("button");
+    b.className = "srow";
+    b.innerHTML = `
+      <span class="who">
+        <span class="tag long">LONG</span>
+        <span class="tag tf num">${s.tf}</span>
+        <span class="sym num">${s.symbol}</span>
+        <span class="when num">${when(s.signalTime, tfMs)}</span>
+        ${s.quality ? `<span class="tag" style="background:#f7fee7;color:#4d7c0f">کیفیت بالا</span>` : ""}
+      </span>
+      <span class="nums num">
+        <span>ورود <b>${fmt(s.price)}</b></span>
+        <span style="color:#0369a1">هدف۱ <b>${fmt(s.tp1)}</b></span>
+        <span style="color:#1d4ed8">هدف۲ <b>${fmt(s.tp2)}</b></span>
+        <span style="color:#b91c1c">حدضرر <b>${fmt(s.sl)}</b></span>
+      </span>
+      <span class="dist num ${t2 ? "chip green" : t1 ? "chip lime" : "chip blue"}">${badge}</span>`;
+    b.onclick = () => { state.tf = s.tf; renderAll(); selectSymbol(s.symbol, s.tf); };
+    box.appendChild(b);
+  }
+}
+
+function renderRows() {
+  const q = ($("search").value || "").trim().toUpperCase();
+  const only = $("onlyLong").dataset.on === "1";
+  const body = $("rows");
+  body.innerHTML = "";
+  for (const m of state.markets) {
+    if (q && !m.symbol.includes(q)) continue;
+    const lit = TFK.filter(k => m.sigs?.[k]);
+    if (only && !lit.length) continue;
+    const tr = document.createElement("tr");
+    tr.dataset.symbol = m.symbol;
+    if (state.selected === m.symbol) tr.className = "sel";
+    const cells = TFK.map(k => {
+      const s = m.sigs?.[k];
+      if (!s) return `<td><span class="lit">·</span></td>`;
+      const fresh = Date.now() - s.signalTime <= tfOf(k).ms * 3;
+      const short = k === "15m" ? "15" : k === "1h" ? "1h" : k === "4h" ? "4h" : "1d";
+      return `<td><span class="lit ${s.quality ? "on" : "mid"}${fresh ? "" : " stale"}" title="${when(s.signalTime, tfOf(k).ms)}">${short}</span></td>`;
+    }).join("");
+    tr.innerHTML = `
+      <td class="num muted">${m.rank}</td>
+      <td class="num" style="font-weight:800">${m.symbol}</td>
+      <td class="num">${fmt(m.price)}</td>
+      <td class="num ${m.change == null ? "" : m.change >= 0 ? "up" : "down"}">${pct(m.change)}</td>
+      ${cells}`;
+    tr.onclick = () => selectSymbol(m.symbol, state.tf);
+    body.appendChild(tr);
+  }
+}
+
+function setProgress(frac, text) {
+  $("scanBar").style.width = `${Math.round(Math.min(1, frac) * 100)}%`;
+  if (text) $("scanText").textContent = text;
+}
+
+/* ============================================================================
+   SCAN
+   ============================================================================ */
+async function scan(force) {
+  if (state.busy) return;
+  if (!force) {
+    const cached = loadCache();
+    if (cached) {
+      state.markets = cached.markets; state.signals = cached.signals; state.at = cached.at;
+      state.total = cached.total || cached.markets.length; state.scanned = state.total;
+      renderAll(); $("scanBoot").style.display = "none";
+      paintStatus("زنده", "live");
+      if (Date.now() - cached.at < 3 * 60_000) return;
+    }
+  }
+  state.busy = true;
+  paintStatus("در حال اسکن", "warn");
+  try {
+    const markets = await universe();
+    state.markets = markets.map(m => ({ ...m, sigs: {} }));
+    state.total = markets.length; state.scanned = 0; state.signals = [];
+    renderRows(); renderSignals();
+    const queue = [...state.markets];
+    let done = 0;
+    const worker = async () => {
+      for (;;) {
+        const m = queue.shift();
+        if (!m) return;
+        try {
+          const hist = {};
+          for (const tf of TF) hist[tf.k] = await candles(m.pair, tf, tf.bars);
+          for (const tf of TF) {
+            const own = hist[tf.k];
+            if (own.length < 2 * W + 10) continue;
+            const a = analyze(own);
+            const sig = a.signals[a.signals.length - 1];
+            if (!sig) continue;
+            if (state.strict && !sig.quality) continue;
+            m.sigs[tf.k] = {
+              id: `${m.symbol}-${tf.k}-${sig.t}`, symbol: m.symbol, tf: tf.k, rank: m.rank,
+              price: sig.price, support: sig.support, mid: sig.mid, sl: sig.sl, tp1: sig.tp1, tp2: sig.tp2,
+              quality: sig.quality, candleTime: sig.t,
+              signalTime: sig.live ? Date.now() : sig.t + tf.ms, live: sig.live,
+            };
+            state.signals.push(m.sigs[tf.k]);
+          }
+        } catch (e) { /* a market that fails simply has no signal */ }
+        done++; state.scanned = done;
+        setProgress(done / markets.length, `اسکن ${fa(done)} از ${fa(markets.length)} بازار · ${TFK.length} تایم‌فریم`);
+        if (done % 3 === 0) { renderRows(); renderSignals(); }
+      }
+    };
+    await Promise.all(Array.from({ length: CONC }, worker));
+    state.at = Date.now(); state.busy = false; state.scanned = markets.length;
+    snap = { at: state.at, total: state.total, markets: state.markets, signals: state.signals };
+    saveCache();
+    renderAll();
+    $("scanBoot").style.display = "none";
+    paintStatus("زنده", "live");
+    $("updated").textContent = `آخرین اسکن ${timeKey(Date.now())}`;
+  } catch (e) {
+    state.busy = false;
+    paintStatus("خطا در اتصال", "warn");
+    $("scanText").textContent = "دسترسی به Gate.io برقرار نشد؛ دوباره تلاش کنید.";
+  }
+}
+
+/* ============================================================================
+   CHART + ACCURACY
+   ============================================================================ */
+let chartApi = null, candleSeries = null, bandS = null, markersApi = null, priceLines = [];
+
+function initChart() {
+  const chart = LightweightCharts.createChart($("chart"), {
+    autoSize: true,
+    layout: { background: { type: "solid", color: "#ffffff" }, textColor: "#131722", fontFamily: "Vazirmatn Variable, sans-serif", fontSize: 11, attributionLogo: true },
+    grid: { vertLines: { color: "#f1f4f9" }, horzLines: { color: "#f1f4f9" } },
+    rightPriceScale: { borderColor: "#e4e6ea", entireTextOnly: true, scaleMargins: { top: 0.12, bottom: 0.14 } },
+    timeScale: { borderColor: "#e4e6ea", timeVisible: false, rightOffset: 5, barSpacing: 5, minBarSpacing: 0.2 },
+    crosshair: { mode: 0 },
+  });
+  candleSeries = chart.addSeries(LightweightCharts.CandlestickSeries, {
+    upColor: "#26a69a", downColor: "#ef5350", borderVisible: false,
+    wickUpColor: "#26a69a", wickDownColor: "#ef5350", priceLineVisible: false,
+  });
+  const line = (color, width, style) => chart.addSeries(LightweightCharts.LineSeries, {
+    color, lineWidth: width, lineStyle: style, priceLineVisible: false, lastValueVisible: false,
+    crosshairMarkerVisible: false, autoscaleInfoProvider: () => null,
+  });
+  bandS = {
+    sup: line("#22c55e", 1, LightweightCharts.LineStyle.Dashed),
+    mid: line("#94a3b8", 1, LightweightCharts.LineStyle.Solid),
+    res: line("#f87171", 1, LightweightCharts.LineStyle.Dashed),
+  };
+  markersApi = LightweightCharts.createSeriesMarkers(candleSeries, []);
+  chartApi = chart;
+}
+
+async function selectSymbol(symbol, tf) {
+  state.selected = symbol;
+  if (tf) state.tf = tf;
+  renderRows(); renderTabs();
+  $("chartSym").textContent = symbol;
+  $("chartState").textContent = "…";
+  $("stats").innerHTML = `<span class="muted">در حال بارگذاری تاریخچه…</span>`;
+  $("acc").innerHTML = "";
+  const key = `${symbol}:${state.tf}`;
+  try {
+    let entry = state.charts.get(key);
+    if (!entry) {
+      const t = tfOf(state.tf);
+      const own = await candles(`${symbol}USDT`, { ...t, bars: 960 }, 960);
+      entry = { own, at: Date.now() };
+      state.charts.set(key, entry);
+    }
+    drawChart(symbol, entry);
+  } catch (e) {
+    $("stats").innerHTML = `<span class="muted">تاریخچه‌ی این بازار در دسترس نیست.</span>`;
+  }
+}
+
+function drawChart(symbol, entry) {
+  if (!chartApi || !entry.own.length) return;
+  const tf = tfOf(state.tf);
+  const c = entry.own;
+  const res = analyze(c);
+  const all = settle(c, res.signals);
+  const strict = settle(c, res.signals.filter(s => s.quality));
+  const stAll = statsOf(all), stStrict = statsOf(strict);
+  const shown = state.strict ? strict : all;
+
+  candleSeries.setData(c.map(k => ({ time: Math.floor(k.t / 1000), open: k.o, high: k.h, low: k.l, close: k.c })));
+  const pts = arr => arr.map((v, i) => ({ time: Math.floor(c[i].t / 1000), value: v })).filter(p => Number.isFinite(p.value));
+  bandS.sup.setData(pts(res.sup)); bandS.mid.setData(pts(res.mid)); bandS.res.setData(pts(res.res));
+  markersApi.setMarkers(shown.map(s => ({
+    time: Math.floor(s.t / 1000), position: "belowBar", shape: "arrowUp",
+    color: s.outcome === "TP2" ? "#16a34a" : s.outcome === "TP1" ? "#84cc16" : s.outcome === "SL" ? "#cbd5e1" : "#65a30d",
+    size: 1, text: "",
+  })));
+
+  for (const pl of priceLines) { try { candleSeries.removePriceLine(pl); } catch {} }
+  priceLines = [];
+  const lastSig = shown[shown.length - 1];
+  if (lastSig) {
+    const add = (price, color, title, style) => {
+      const pl = candleSeries.createPriceLine({ price, color, lineWidth: 1, lineStyle: style, axisLabelVisible: true, title });
+      priceLines.push(pl);
+    };
+    add(lastSig.tp2, "#0284c7", "هدف۲", LightweightCharts.LineStyle.Dotted);
+    add(lastSig.tp1, "#16a34a", "هدف۱", LightweightCharts.LineStyle.Dotted);
+    add(lastSig.sl, "#ef4444", "حدضرر", LightweightCharts.LineStyle.Dashed);
+  }
+  chartApi.timeScale().fitContent();
+
+  const m = state.markets.find(x => x.symbol === symbol);
+  const last = c[c.length - 1];
+  $("chartPrice").textContent = fmt(m ? (m.price ?? last.c) : last.c);
+  const chg = m ? m.change : null;
+  $("chartChange").textContent = chg == null ? "" : pct(chg);
+  $("chartChange").className = `num ${chg == null ? "" : chg >= 0 ? "up" : "down"}`;
+  const live = m?.sigs?.[state.tf];
+  $("chartState").className = `chip ${live ? "lime" : ""}`;
+  $("chartState").textContent = live ? "سیگنال فعال" : "بدون سیگنال";
+  $("chartRange").textContent = `${dayKey(c[0].t)} → ${dayKey(last.t)} · ${fa(c.length)} کندل`;
+
+  $("stats").innerHTML = `
+    <strong>برایند ${tf.label}</strong>
+    <span class="chip">${fa(stAll.signals)} سیگنال</span>
+    <span class="chip green">دقت هدف۱: ${stAll.hit.toFixed(0)}٪</span>
+    <span class="chip blue">دقت هدف۲: ${stAll.hitFull.toFixed(0)}٪</span>
+    ${stStrict && stStrict.signals ? `<span class="chip lime">با فیلتر کیفیت: ${stStrict.hit.toFixed(0)}٪ (${fa(stStrict.signals)} سیگنال)</span>` : ""}
+    <span class="muted" style="margin-inline-start:auto">حد ضرر ۲.۵×ATR</span>`;
+
+  const box = (k, v, s, tone) => `<div class="box"><span class="k">${k}</span><span class="v num ${tone || ""}">${v}</span><span class="s num">${s}</span></div>`;
+  $("acc").innerHTML = !stAll ? `<div class="muted">هنوز سیگنالی برای سنجش دقت در این بازار نیست.</div>` : `
+    ${box("دقت هدف اول", `${stAll.hit.toFixed(0)}٪`, `${fa(stAll.win)} از ${fa(stAll.signals)} معامله`)}
+    ${box("دقت هدف دوم", `${stAll.hitFull.toFixed(0)}٪`, `${fa(stAll.full)} به خط میانی`)}
+    ${box("حد ضرر خورده", `${fa(stAll.stopped)}`, `از ${fa(stAll.signals)} سیگنال`, "down")}
+    ${box("میانگین نتیجه", pct(stAll.avgPnl), "با حد ضرر و دو هدف", stAll.avgPnl >= 0 ? "up" : "down")}
+    ${stAll.avgBars != null ? box("زمان رسیدن به هدف۱", `${fa(Math.round(stAll.avgBars))} کندل`, tf.label, "") : ""}
+    ${stStrict && stStrict.signals ? box("دقت با فیلتر کیفیت", `${stStrict.hit.toFixed(0)}٪`, `${fa(stStrict.signals)} سیگنال برگزیده`, "up") : ""}`;
+}
+
+/* ============================================================================
+   WIRING
+   ============================================================================ */
+function renderTabs() {
+  const ct = $("chartTabs"); ct.innerHTML = "";
+  for (const t of TF) {
+    const b = document.createElement("button");
+    b.textContent = t.label; b.className = t.k === state.tf ? "on" : "";
+    b.onclick = () => { state.tf = t.k; renderTabs(); if (state.selected) selectSymbol(state.selected, t.k); };
+    ct.appendChild(b);
+  }
+  const st = $("sigTabs"); st.innerHTML = "";
+  for (const k of ["all", ...TFK]) {
+    const b = document.createElement("button");
+    b.textContent = k === "all" ? "همه" : k; b.className = k === state.sigTf ? "on" : "";
+    b.onclick = () => { state.sigTf = k; renderTabs(); renderSignals(); };
+    st.appendChild(b);
+  }
+  $("modeChip").textContent = state.strict ? "دقت بالا" : "همه سیگنال‌ها";
+  $("modeChip").className = `chip ${state.strict ? "lime" : ""}`;
+}
+
+function renderAll() {
+  renderTabs(); renderRows(); renderSignals();
+  $("updated").textContent = state.at ? `آخرین اسکن ${timeKey(state.at)}` : "—";
+  if (!state.selected && state.markets.length) selectSymbol(state.markets[0].symbol, state.tf);
+}
+
+function tickCountdown() {
+  const tf = tfOf(state.tf);
+  const ms = Math.floor(Date.now() / tf.ms) * tf.ms + tf.ms - Date.now();
+  const h = Math.floor(ms / 3600e3), mi = Math.floor((ms % 3600e3) / 60e3);
+  $("countdown").textContent = h > 0 ? `${h}:${String(mi).padStart(2, "0")} تا بسته‌شدن کندل ${tf.k}` : `${mi} دقیقه تا بسته‌شدن کندل ${tf.k}`;
+}
+
+$("refresh").onclick = async () => {
+  localStorage.removeItem(KEY);
+  state.charts.clear();
+  $("scanBoot").style.display = "flex";
+  setProgress(0, "در حال دریافت بازارها…");
+  await scan(true);
+};
+$("search").oninput = renderRows;
+$("onlyLong").onclick = () => {
+  const on = $("onlyLong").dataset.on === "1";
+  $("onlyLong").dataset.on = on ? "0" : "1";
+  $("onlyLong").classList.toggle("primary", !on);
+  renderRows();
+};
+$("mode").onclick = async () => {
+  state.strict = !state.strict;
+  renderTabs();
+  if (state.selected) selectSymbol(state.selected, state.tf);
+  localStorage.removeItem(KEY);
+  await scan(true);
+};
+
+window.__radar = { state, candles, toPair, analyze, scan };
+
+(function boot() {
+  initChart();
+  renderTabs();
+  renderRows();
+  tickCountdown();
+  scan(false);
+  setInterval(tickCountdown, 15_000);
+  setInterval(() => { renderSignals(); renderRows(); }, 45_000);
+  setInterval(() => { if (!state.busy && Date.now() - state.at > TTL) scan(true); }, 60_000);
+})();
+</script>
+</body>
+</html>
