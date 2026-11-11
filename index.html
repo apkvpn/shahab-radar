@@ -411,7 +411,7 @@ function saveCache() {
 const state = {
   markets: [], signals: [], at: 0, cursor: 0, round: 0, gen: 0, scannedRound: 0,
   busy: false, total: 0, scanned: 0,
-  selected: null, tf: "1d", sigTf: "all", strict: true, charts: new Map(), focusT: null,
+  selected: null, tf: "1d", sigTf: "all", strict: true, charts: new Map(), focusT: null, drawSeq: 0,
 };
 const $ = id => document.getElementById(id);
 const fmt = v => v == null || !Number.isFinite(v) ? "—"
@@ -662,6 +662,7 @@ async function selectSymbol(symbol, tf, focusT) {
   state.selected = symbol;
   if (tf) state.tf = tf;
   state.focusT = focusT == null ? null : focusT;
+  const seq = ++state.drawSeq;                 // a slower earlier load must not overwrite the chart
   renderRows(); renderTabs();
   $("chartSym").textContent = symbol;
   $("chartState").textContent = "…";
@@ -676,7 +677,9 @@ async function selectSymbol(symbol, tf, focusT) {
       entry = { own, at: Date.now() };
       state.charts.set(key, entry);
     }
+    if (seq !== state.drawSeq) return;
     drawChart(symbol, entry);
+    setTimeout(() => { if (seq === state.drawSeq) drawChart(symbol, entry); }, 120);
   } catch (e) {
     $("stats").innerHTML = `<span class="muted">تاریخچه‌ی این بازار در دسترس نیست.</span>`;
   }
