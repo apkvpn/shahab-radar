@@ -103,9 +103,7 @@
   .chip.blue{background:rgba(96,165,250,.14);border-color:rgba(96,165,250,.34);color:#93c5fd}
   .muted{color:var(--muted);font-size:11px}
 
-  /* ---------- signal strip ---------- */
-  .strip{display:flex;gap:12px;overflow-x:auto;padding:16px 18px;direction:rtl;scroll-snap-type:x proximity;scrollbar-width:thin}
-  .strip::-webkit-scrollbar{height:9px}
+  /* ---------- signal cards ---------- */
   .sig{flex:0 0 auto;width:196px;direction:ltr;scroll-snap-align:start;display:grid;gap:9px;padding:13px 14px;
     border:1px solid var(--line);border-radius:16px;text-align:left;transition:.2s ease;position:relative;overflow:hidden;
     background:linear-gradient(165deg,rgba(32,38,47,.9),rgba(15,18,23,.95));
@@ -125,7 +123,8 @@
   .tag.d1{background:rgba(96,165,250,.12);border-color:rgba(96,165,250,.28);color:#93c5fd}
   .tag.rank{background:rgba(200,247,81,.10);border-color:rgba(200,247,81,.26);color:#d9ff8f;font-variant-numeric:tabular-nums}
   .badge-new{font-size:9px;font-weight:900;border-radius:999px;padding:2.5px 8px;color:#0a0f02;
-    background:linear-gradient(135deg,#e2ff7a,#a3e635);box-shadow:0 4px 12px -6px rgba(163,230,53,.9);white-space:nowrap}
+    background:linear-gradient(135deg,#e2ff7a,#a3e635);box-shadow:0 4px 12px -6px rgba(163,230,53,.9);white-space:nowrap;
+    justify-self:start}
   .sig-badge{font-size:9px;font-weight:900;border-radius:6px;padding:2.5px 7px;letter-spacing:.06em;white-space:nowrap;
     border:1px solid transparent}
   .sig-badge.tp{background:rgba(96,165,250,.16);border-color:rgba(96,165,250,.38);color:#bfdbfe;
@@ -209,15 +208,65 @@
   footer{position:relative;z-index:1;max-width:1240px;margin:0 auto;padding:0 18px 26px;color:#6b7481;font-size:11px;
     display:flex;flex-wrap:wrap;gap:10px}
 
-  @media (min-width:900px){ .sig{width:208px} }
+  /* ---------- stats ---------- */
+  .stats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+  @media (min-width:700px){ .stats{grid-template-columns:repeat(5,minmax(0,1fr))} }
+  .stat{position:relative;padding:11px 13px;border-radius:16px;border:1px solid var(--line);overflow:hidden;
+    background:linear-gradient(165deg,rgba(28,33,41,.86),rgba(12,15,19,.9));
+    box-shadow:0 14px 34px -26px rgba(0,0,0,.95), 0 1px 0 rgba(255,255,255,.05) inset}
+  .stat::after{content:"";position:absolute;inset:0 auto 0 0;width:2px;opacity:.55;
+    background:linear-gradient(180deg,var(--lime),transparent)}
+  .stat .k{display:block;font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);
+    font-weight:800;margin-bottom:4px}
+  .stat b{font-size:20px;font-weight:800;letter-spacing:-.02em;display:block;line-height:1.15}
+  .stat b.up{color:var(--up)}
+
+  /* ---------- filters ---------- */
+  .filters{display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:11px 18px;border-bottom:1px solid var(--line);
+    background:linear-gradient(180deg,rgba(255,255,255,.02),transparent)}
+  .filters .input{height:34px;flex:1 1 140px;min-width:120px;max-width:250px;font-size:12px;border-radius:10px;padding:0 11px}
+  .seg{display:inline-flex;padding:3px;gap:2px;border-radius:11px;border:1px solid var(--line);background:rgba(0,0,0,.28)}
+  .seg button{border:0;background:transparent;color:var(--muted);font-size:11.5px;font-weight:700;padding:5px 10px;
+    border-radius:8px;transition:.15s}
+  .seg button:hover{color:#fff}
+  .seg button.on{background:linear-gradient(135deg,#e2ff7a,#a3e635);color:#0a0f02;
+    box-shadow:0 4px 14px -8px rgba(163,230,53,.95)}
+  .sel{height:34px;border-radius:10px;border:1px solid var(--line);background:rgba(255,255,255,.05);color:var(--ink);
+    font-size:11.5px;font-weight:600;padding:0 8px;outline:none}
+
+  /* ---------- signal grid ---------- */
+  .grid{display:grid;gap:11px;padding:16px 18px;grid-template-columns:repeat(auto-fill,minmax(212px,1fr))}
+  @media (max-width:560px){ .grid{grid-template-columns:repeat(auto-fill,minmax(157px,1fr));padding:12px;gap:9px} }
+  .grid .sig{width:auto;cursor:pointer;outline:none}
+  .grid .sig:focus-visible{border-color:rgba(200,247,81,.55);box-shadow:0 0 0 3px rgba(163,230,53,.18)}
+  .sig-head .right{display:flex;align-items:center;gap:4px}
+  .star{border:0;background:transparent;color:#5b6572;font-size:13px;line-height:1;padding:2px 3px;border-radius:6px;transition:.15s}
+  .star:hover{color:#d9ff8f;background:rgba(200,247,81,.12)}
+  .star.on{color:#d9ff8f;text-shadow:0 0 10px rgba(200,247,81,.75)}
+  .px{display:flex;align-items:baseline;gap:7px;font-size:13px}
+  .px b{font-weight:800;color:#fff}
+  .px i{font-style:normal;font-size:10.5px;font-weight:700}
+  .px i.up{color:var(--up)} .px i.down{color:var(--down)}
+  .prog{height:4px;border-radius:99px;background:rgba(255,255,255,.08);overflow:hidden}
+  .prog i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,#65a30d,#c8f751);
+    box-shadow:0 0 10px rgba(200,247,81,.5);transition:width .4s ease}
+  .prog.done i{background:linear-gradient(90deg,#38bdf8,#93c5fd);box-shadow:0 0 10px rgba(96,165,250,.6)}
+  .empty{padding:26px 18px;color:var(--muted);font-size:12px;text-align:center;grid-column:1/-1}
+  .toast{position:fixed;left:50%;bottom:22px;transform:translate(-50%,20px);z-index:80;opacity:0;pointer-events:none;
+    background:linear-gradient(135deg,#e2ff7a,#a3e635);color:#0a0f02;font-weight:800;font-size:12.5px;padding:10px 16px;
+    border-radius:999px;box-shadow:0 18px 40px -18px rgba(163,230,53,.9);transition:.28s}
+  .toast.show{opacity:1;transform:translate(-50%,0)}
+
+  @media (min-width:900px){ .grid{grid-template-columns:repeat(auto-fill,minmax(224px,1fr))} }
   @media (max-width:640px){
     .top-row{padding:10px 14px;gap:8px}
     main{padding:12px;gap:12px}
     .btn{padding:8px 11px;font-size:12.5px}
-    .strip{padding:12px}
     .toolbar{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none}
     .toolbar::-webkit-scrollbar{display:none}
     .toolbar .hint{display:none}
+    .filters{padding:10px 12px}
+    .filters .input{max-width:none;flex:1 1 100%}
     .modal-head{flex-wrap:wrap;align-items:flex-start}
     .modal-box{padding:16px;border-radius:18px}
     .report-body table{min-width:520px}
@@ -226,7 +275,7 @@
   @media print{
     body{background:#fff;color:#111}
     .bg-glow{display:none}
-    header.top, main, footer, .report-controls, .coin-list, .modal-head, #reportProgress, .report-note{display:none !important}
+    header.top, main, footer, .report-controls, .coin-list, .modal-head, #reportProgress, .report-note, .toast{display:none !important}
     .modal{position:static;background:#fff;padding:0;display:block;backdrop-filter:none}
     .modal-box{box-shadow:none;max-height:none;max-width:100%;padding:0;background:#fff;border:0;color:#111}
     .modal-box h3{color:#111}
@@ -272,13 +321,38 @@
 </header>
 
 <main>
+  <section class="stats" id="stats" aria-label="Signal statistics">
+    <div class="stat"><span class="k">Signals</span><b class="num" id="stSignals">—</b></div>
+    <div class="stat"><span class="k">TP hit</span><b class="num up" id="stTp">—</b></div>
+    <div class="stat"><span class="k">Open</span><b class="num" id="stOpen">—</b></div>
+    <div class="stat"><span class="k">TP rate</span><b class="num" id="stRate">—</b></div>
+    <div class="stat"><span class="k">Avg gain / TP</span><b class="num up" id="stAvg">—</b></div>
+  </section>
+
   <section class="card" id="signals-sec">
     <div class="card-head">
       <h2>Market signals</h2>
       <span class="chip lime" id="sigCount">—</span>
       <span class="muted" id="sigNote" style="margin-left:auto"></span>
     </div>
-    <div class="strip" id="signals"><div class="boot"><span>Building the signal list…</span></div></div>
+    <div class="filters">
+      <input id="sigSearch" class="input" placeholder="Search coin…  /" autocomplete="off" spellcheck="false">
+      <div class="seg" id="sigFilter">
+        <button class="on" data-f="all">All</button>
+        <button data-f="tp">TP</button>
+        <button data-f="open">Open</button>
+        <button data-f="new">New</button>
+        <button data-f="star">★</button>
+      </div>
+      <select id="sigSort" class="sel" aria-label="Sort signals">
+        <option value="new">Newest</option>
+        <option value="rank">Market rank</option>
+        <option value="tp">TP target %</option>
+        <option value="prog">Closest to TP</option>
+      </select>
+      <button class="btn small" id="exportCsv" style="margin-left:auto">CSV</button>
+    </div>
+    <div class="grid" id="signals"><div class="boot"><span>Building the signal list…</span></div></div>
   </section>
 
   <section class="card chart-card">
@@ -287,6 +361,7 @@
       <span class="num" id="chartPrice" style="font-weight:800">—</span>
       <span class="num" id="chartChange" style="font-size:12px;font-weight:600"></span>
       <span class="chip" id="chartState">…</span>
+      <span class="chip lime" id="chartRank" hidden></span>
       <span class="muted" id="chartRange" style="margin-left:auto"></span>
     </div>
 
@@ -372,1004 +447,9 @@
   </div>
 </div>
 
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
 <script src="https://cdn.jsdelivr.net/npm/lightweight-charts@5/dist/lightweight-charts.standalone.production.js"></script>
-<script type="module">
-/* ENGINE-START */
-/* ============================================================================
-   SIGNAL ENGINE — daily only
-   Support band = smoothed close ± MULT·ATR, midline from the ALMA smoothing.
-   A signal fires when the low pierces support and the candle closes back above
-   it. Entry = that close. TP = the grey midline.
-   Outcome: TP once price touches the midline, OPEN until it does. There is no
-   stop loss — a trade only ever closes at the target.
-   ============================================================================ */
-const W = 80, BANDWIDTH = 2, OFFSET = 0.85, SIGMA = 8, ATR_LEN = 100, MULT = 4;
-const TREND_LOOKBACK = 5;
-
-const KERNEL = (() => {
-  const w = []; let sum = 0;
-  for (let k = 0; k < W; k++) { const v = Math.exp(-(k * k) / (2 * BANDWIDTH * BANDWIDTH)); w.push(v); sum += v; }
-  return w.map(v => v / sum);
-})();
-const ALMA = (() => {
-  const m = Math.floor(OFFSET * (W - 1)), s = W / SIGMA;
-  const w = []; let sum = 0;
-  for (let i = 0; i < W; i++) { const v = Math.exp(-((i - m) * (i - m)) / (2 * s * s)); w.push(v); sum += v; }
-  return w.map(v => v / sum);
-})();
-
-const valid = c => c && [c.o, c.h, c.l, c.c].every(n => Number.isFinite(n) && n > 0)
-  && c.h + c.h * 1e-12 >= Math.max(c.o, c.c) && c.l - c.h * 1e-12 <= Math.min(c.o, c.c) && c.h >= c.l;
-
-function bands(candles) {
-  const n = candles.length;
-  const nw = new Array(n).fill(NaN), mid = new Array(n).fill(NaN), atr = new Array(n).fill(NaN);
-  const sup = new Array(n).fill(NaN), res = new Array(n).fill(NaN);
-  for (let i = W - 1; i < n; i++) { let acc = 0; for (let k = 0; k < W; k++) acc += candles[i - k].c * KERNEL[k]; nw[i] = acc; }
-  for (let i = 2 * W - 2; i < n; i++) {
-    let acc = 0; const base = i - (W - 1);
-    for (let j = 0; j < W; j++) acc += nw[base + j] * ALMA[j];
-    mid[i] = acc;
-  }
-  let rma = NaN, seed = 0;
-  for (let i = 0; i < n; i++) {
-    const c = candles[i], pc = i > 0 ? candles[i - 1].c : NaN;
-    const tr = Number.isFinite(pc) ? Math.max(c.h - c.l, Math.abs(c.h - pc), Math.abs(c.l - pc)) : c.h - c.l;
-    if (i < ATR_LEN) { seed += tr; if (i === ATR_LEN - 1) { rma = seed / ATR_LEN; atr[i] = rma; } }
-    else { rma = (rma * (ATR_LEN - 1) + tr) / ATR_LEN; atr[i] = rma; }
-  }
-  for (let i = 0; i < n; i++) if (Number.isFinite(mid[i]) && Number.isFinite(atr[i])) {
-    sup[i] = mid[i] - MULT * atr[i]; res[i] = mid[i] + MULT * atr[i];
-  }
-  return { mid, sup, res, atr };
-}
-
-function analyze(candles) {
-  const b = bands(candles);
-  const { mid, sup, atr } = b;
-  const signals = [], last = candles.length - 1;
-  for (let i = 1; i < candles.length; i++) {
-    const c = candles[i], p = candles[i - 1];
-    if (!c.x && i !== last) continue;
-    if (!valid(c) || !valid(p)) continue;
-    const s = sup[i], ps = sup[i - 1];
-    if (!Number.isFinite(s) || !Number.isFinite(ps) || !Number.isFinite(atr[i])) continue;
-    if (!(c.l < s && p.l >= ps)) continue;
-    if (!(mid[i] > c.c)) continue;                    // TP must sit above the entry
-    const reclaim = c.c > s;
-    const trendUp = Number.isFinite(mid[i - TREND_LOOKBACK]) && mid[i] > mid[i - TREND_LOOKBACK];
-    signals.push({
-      i, t: c.t, entry: c.c, support: s, mid: mid[i], resistance: b.res[i], atr: atr[i],
-      quality: reclaim && trendUp, live: !c.x,
-      tp: mid[i],
-    });
-  }
-  return { ...b, signals };
-}
-
-function settle(candles, s) {
-  const lastClose = candles[candles.length - 1].c;
-  const tpPct = (s.tp / s.entry - 1) * 100;
-  for (let j = s.i + 1; j < candles.length; j++) {
-    if (candles[j].h >= s.tp) return { ...s, outcome: "TP", days: j - s.i, pnlPct: tpPct };
-  }
-  return { ...s, outcome: "OPEN", days: null, pnlPct: (lastClose / s.entry - 1) * 100 };
-}
-/* ENGINE-END */
-
-const sleep = ms => new Promise(r => setTimeout(r, ms));
-const HOST = "https://api.gateio.ws";
-const UNIVERSE = 1000;
-const BATCH = 110;
-const CONC = 6;
-const D1 = { k: "1d", iv: "1d", ms: 864e5, bars: 500 };
-const CHART_BARS = 900;
-const STABLE = new Set("usdt usdc dai tusd busd fdusd usde usds usdd pyusd usdg rlusd lusd susd usdp eurc eurt frax gho usdb usdx ousd mim usd1".split(" "));
-const toPair = s => s.includes("_") ? s.toUpperCase() : `${s.replace(/USDT$/i, "")}_USDT`.toUpperCase();
-
-let nextSlot = 0, gap = 130;
-async function api(path, params, tries = 3, priority = false) {
-  const qs = new URLSearchParams(Object.entries(params || {}).map(([k, v]) => [k, String(v)]));
-  const url = `${HOST}${path}?${qs}`;
-  if (priority) nextSlot = Date.now();
-  for (let a = 0; a < tries; a++) {
-    const now = Date.now();
-    const wait = Math.max(0, nextSlot - now);
-    nextSlot = Math.max(now, nextSlot) + gap;
-    if (wait > 0) await sleep(wait);
-    try {
-      const res = await fetch(url, { cache: "no-store" });
-      if (res.ok) { gap = Math.max(110, gap - 4); return await res.json(); }
-      if (res.status === 429) { gap = Math.min(900, Math.round(gap * 1.7)); await sleep(1500); continue; }
-      throw new Error("gate_" + res.status);
-    } catch (e) {
-      gap = Math.min(900, Math.round(gap * 1.4));
-      await sleep(500 * (a + 1) + Math.round(Math.random() * 400));
-    }
-  }
-  throw new Error("gate_failed");
-}
-
-function parse(rows, tfMs) {
-  if (!Array.isArray(rows)) return [];
-  const out = [];
-  for (const r of rows) {
-    const t = Number(r[0]) * 1000;
-    const close = Number(r[2]), high = Number(r[3]), low = Number(r[4]), open = Number(r[5]), vol = Number(r[6]);
-    if (![t, open, high, low, close].every(Number.isFinite)) continue;
-    if (!(open > 0 && high > 0 && low > 0 && close > 0) || high < low) continue;
-    out.push({ t, o: open, h: high, l: low, c: close, v: Number.isFinite(vol) ? vol : 0,
-      x: r[7] === "true" || r[7] === true || t + tfMs + 60_000 < Date.now() });
-  }
-  return out.sort((a, b) => a.t - b.t);
-}
-
-async function universe() {
-  const list = await api("/api/v4/spot/tickers", {});
-  if (!Array.isArray(list)) throw new Error("bad_tickers");
-  const seen = new Set(), ranked = [];
-  for (const r of list) {
-    const cp = String(r.currency_pair || "").toUpperCase();
-    if (!cp.endsWith("_USDT")) continue;
-    const base = cp.slice(0, -5);
-    if (!/^[A-Z0-9]{2,15}$/.test(base) || STABLE.has(base.toLowerCase()) || seen.has(base)) continue;
-    if (/(3L|3S|5L|5S|UP|DOWN|BULL|BEAR)$/.test(base)) continue;
-    const price = Number(r.last ?? r.lowest_ask), vol = Number(r.quote_volume ?? r.base_volume);
-    if (!(price > 0) || !Number.isFinite(vol) || vol <= 0) continue;
-    const chg = Number(r.change_percentage);
-    seen.add(base);
-    ranked.push({ symbol: base, pair: cp, price, volume: vol, change: Number.isFinite(chg) ? chg : null });
-  }
-  ranked.sort((a, b) => b.volume - a.volume);
-  return ranked.slice(0, UNIVERSE).map((m, i) => ({ ...m, rank: i + 1 }));
-}
-
-async function candles(pair, bars, priority = false) {
-  const rows = await api("/api/v4/spot/candlesticks", {
-    currency_pair: toPair(pair), interval: D1.iv, limit: Math.min(1000, Math.max(200, bars)),
-  }, priority ? 5 : 3, priority);
-  return parse(rows, D1.ms).slice(-bars);
-}
-
-const KEY = "shahab-radar-d1-v8", CACHE_VERSION = 8;
-
-/* The scan lives in localStorage for good: the markets list, every signal that
-   was already found, the position the scan stopped at and whether a full pass
-   finished. Coming back to the page resumes from that point instead of starting
-   over, and a rescan only ever adds or refreshes signals — never wipes them. */
-function loadCache() {
-  try {
-    const raw = localStorage.getItem(KEY); if (!raw) return null;
-    const d = JSON.parse(raw);
-    return d && d.v === CACHE_VERSION && Array.isArray(d.markets) && d.markets.length ? d : null;
-  } catch { return null; }
-}
-function saveCache() {
-  try {
-    localStorage.setItem(KEY, JSON.stringify({
-      v: CACHE_VERSION, at: Date.now(), done: !!state.done, strict: state.strict,
-      cursor: state.cursor, round: state.round, scannedRound: state.scannedRound, scanned: state.scanned,
-      markets: state.markets, signals: state.signals,
-    }));
-  } catch {}
-}
-
-/* ============================================================================
-   STATE
-   ============================================================================ */
-const state = {
-  markets: [], signals: [], at: 0, cursor: 0, round: 0, gen: 0, scannedRound: 0,
-  busy: false, total: 0, scanned: 0, strict: true, charts: new Map(), focusT: null, drawSeq: 0, selectedSymbol: null,
-  reporting: false, done: false,
-};
-const $ = id => document.getElementById(id);
-const fmt = v => v == null || !Number.isFinite(v) ? "—"
-  : Math.abs(v) >= 1000 ? v.toLocaleString("en-US", { maximumFractionDigits: 2 })
-  : v.toLocaleString("en-US", { maximumSignificantDigits: 6 });
-const pct = v => v == null || !Number.isFinite(v) ? "—" : `${v > 0 ? "+" : ""}${v.toFixed(2)}%`;
-const dayKey = t => new Date(t).toLocaleDateString("en-US", { month: "short", day: "numeric" });
-const fullDay = t => new Date(t).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" });
-const stamp = t => `${dayKey(t)} ${new Date(t).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", hour12: false })}`;
-
-function paintStatus(text, tone) {
-  $("status").className = `pill ${tone || "warn"}`;
-  $("statusText").textContent = text;
-}
-function setProgress(frac, text) {
-  $("scanBar").style.width = `${Math.round(Math.min(1, Math.max(0, frac)) * 100)}%`;
-  if (text) $("scanText").textContent = text;
-}
-
-function outcomeChip(s) {
-  if (s.outcome === "TP") return `<span class="sig-badge tp" title="Closed in profit at the midline">TP</span>`;
-  return `<span class="sig-badge open" title="Trade still open">OPEN</span>`;
-}
-
-function renderSignals() {
-  const box = $("signals");
-  const list = state.signals.slice().sort((a, b) => b.candleTime - a.candleTime);
-  $("sigCount").textContent = `${list.length} signals`;
-  $("sigNote").textContent = state.strict ? "Quality filter on · close back above support + rising midline" : "All support breaks";
-  if (!list.length) {
-    box.innerHTML = `<div class="boot"><span>${state.busy ? "Scanning markets…" : "No signal matches this filter."}</span></div>`;
-    return;
-  }
-  const weekAgo = Date.now() - 7 * 864e5;
-  const frag = document.createDocumentFragment();
-  for (const s of list) {
-    const fresh = s.candleTime >= weekAgo;
-    const toTp = ((s.tp / s.entry) - 1) * 100;
-    const b = document.createElement("button");
-    b.className = `sig${fresh ? " fresh" : ""}`;
-    b.innerHTML = `
-      <span class="sig-head">
-        <span style="display:flex;align-items:center;gap:6px">
-          <span class="sym num">${s.symbol}</span>
-          <span class="tag d1">D1</span>
-          ${s.rank ? `<span class="tag rank" title="Market rank by 24h volume">#${s.rank}</span>` : ""}
-          ${outcomeChip(s)}
-        </span>
-        ${fresh ? `<span class="badge-new">New Signal</span>` : ""}
-      </span>
-      <span class="sig-rows num">
-        <span>Entry <b>${fmt(s.entry)}</b></span>
-        <span><em style="color:#93c5fd">TP</em> <b>${fmt(s.tp)}</b> <i>${pct(toTp)}</i></span>
-      </span>
-      <span class="sig-foot num">
-        <span>${stamp(s.candleTime)}</span>
-        <span>${s.outcome === "OPEN" ? pct(s.pnlPct) : `${s.days}d`}</span>
-      </span>`;
-    b.onclick = () => {
-      $("chartSym").scrollIntoView({ behavior: "smooth", block: "center" });
-      selectSymbol(s.symbol, s.candleTime / 1000);
-    };
-    frag.appendChild(b);
-  }
-  box.innerHTML = "";
-  box.appendChild(frag);
-}
-
-/* ============================================================================
-   SCAN
-   ============================================================================ */
-async function loadUniverse(force) {
-  const cached = !force && loadCache();
-  if (cached) {
-    state.markets = cached.markets; state.signals = cached.signals || [];
-    state.at = cached.at; state.cursor = cached.cursor || 0; state.round = cached.round || 0;
-    state.done = !!cached.done; state.strict = cached.strict !== false;
-    state.scannedRound = cached.scannedRound || 0;
-    state.total = cached.markets.length; state.scanned = cached.markets.filter(m => m.scannedAt).length;
-    $("mode").textContent = `Quality: ${state.strict ? "High" : "All"}`;
-    renderAll();
-    paintStatus("Live", "live");
-    if (Date.now() - cached.at < 60_000) return;
-  }
-  const markets = await universe();
-  const prev = new Map(state.markets.map(m => [m.symbol, m]));
-  state.markets = markets.map(m => {
-    const old = prev.get(m.symbol);
-    return old ? { ...m, sig: old.sig || null, scannedAt: old.scannedAt || 0 } : { ...m, sig: null, scannedAt: 0 };
-  });
-  state.total = state.markets.length;
-  rebuildSignals();
-  renderAll();
-  buildReportCoins();
-}
-
-function rebuildSignals() {
-  const out = [];
-  for (const m of state.markets) if (m.sig) out.push(m.sig);
-  state.signals = out;
-}
-
-async function scanSlice() {
-  if (state.busy || !state.markets.length) return;
-  state.busy = true;
-  paintStatus("Scanning", "warn");
-  const total = state.markets.length;
-  const start = state.cursor % total;
-  const slice = [];
-  for (let i = 0; i < Math.min(BATCH, total); i++) slice.push(state.markets[(start + i) % total]);
-  state.cursor = (start + slice.length) % total;
-  if (state.cursor < start) { state.round++; state.done = true; }
-  if (start === 0) state.scannedRound = 0;
-
-  let done = 0;
-  const queue = [...slice];
-  const worker = async () => {
-    for (;;) {
-      const m = queue.shift();
-      if (!m) return;
-      try {
-        const own = await candles(m.pair, D1.bars);
-        if (own.length >= 2 * W + 10) {
-          const a = analyze(own);
-          const sig = a.signals[a.signals.length - 1];
-          if (sig && (!state.strict || sig.quality) && (!m.sig || sig.t >= m.sig.candleTime)) {
-            const out = settle(own, sig);
-            m.sig = {
-              id: `${m.symbol}-${sig.t}`, symbol: m.symbol, rank: m.rank,
-              entry: sig.entry, tp: sig.tp, support: sig.support,
-              candleTime: sig.t, quality: sig.quality, live: sig.live,
-              outcome: out.outcome, days: out.days, pnlPct: out.pnlPct,
-            };
-          }
-        }
-        m.scannedAt = Date.now();
-      } catch (e) {}
-      done++; state.scanned++; state.scannedRound++;
-      setProgress(state.scannedRound / slice.length,
-        `Round ${state.round + 1} · ${Math.min(state.scannedRound, total)} of ${total} markets`);
-      if (done % 10 === 0) { rebuildSignals(); renderSignals(); }
-    }
-  };
-  await Promise.all(Array.from({ length: CONC }, worker));
-  state.busy = false;
-
-  rebuildSignals();
-  renderAll();
-  paintStatus("Live", "live");
-  state.at = Date.now();
-  saveCache();
-}
-
-async function runRounds() {
-  const gen = ++state.gen;
-  while (!state.done) {
-    if (state.gen !== gen || !state.markets.length) return;
-    if (state.reporting) { await sleep(400); continue; }
-    if (state.busy) { await sleep(300); continue; }
-    await scanSlice();
-  }
-  if (state.gen !== gen) return;
-  saveCache();
-  paintStatus("Saved", "live");
-  setProgress(1, `All ${state.total} markets checked · ${state.signals.length} signals saved`);
-}
-
-/* ============================================================================
-   CHART
-   ============================================================================ */
-let chartApi = null, candleSeries = null, bandS = null, markersApi = null, priceLines = [];
-
-function initChart() {
-  const chart = LightweightCharts.createChart($("chart"), {
-    autoSize: true,
-    layout: { background: { type: "solid", color: "#0a0d12" }, textColor: "#8a94a4", fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif", fontSize: 11, attributionLogo: true },
-    grid: { vertLines: { visible: false }, horzLines: { color: "rgba(255,255,255,.045)" } },
-    rightPriceScale: { borderVisible: false, entireTextOnly: true, scaleMargins: { top: 0.16, bottom: 0.16 } },
-    timeScale: { borderVisible: false, timeVisible: false, rightOffset: 5, barSpacing: 9, minBarSpacing: 1.2 },
-    crosshair: { mode: 0, vertLine: { visible: false, labelVisible: false }, horzLine: { labelVisible: false } },
-  });
-  candleSeries = chart.addSeries(LightweightCharts.CandlestickSeries, {
-    upColor: "#34d399", downColor: "#fb7185", borderVisible: false,
-    wickUpColor: "#34d399", wickDownColor: "#fb7185", priceLineVisible: false,
-  });
-  const line = (color, width, style) => chart.addSeries(LightweightCharts.LineSeries, {
-    color, lineWidth: width, lineStyle: style, priceLineVisible: false, lastValueVisible: false,
-    crosshairMarkerVisible: false, autoscaleInfoProvider: () => null,
-  });
-  bandS = {
-    sup: line("#34d399", 1, LightweightCharts.LineStyle.Dashed),
-    mid: line("#94a3b8", 1, LightweightCharts.LineStyle.Solid),
-    res: line("#fb7185", 1, LightweightCharts.LineStyle.Dashed),
-  };
-  markersApi = LightweightCharts.createSeriesMarkers(candleSeries, []);
-  chartApi = chart;
-}
-
-async function selectSymbol(symbol, focusT) {
-  const seq = ++state.drawSeq;
-  state.selectedSymbol = symbol;
-  state.focusT = focusT == null ? null : focusT;
-  $("chartSym").textContent = symbol;
-  $("chartState").textContent = "…";
-  $("chartState").className = "chip";
-  try {
-    let own = state.charts.get(symbol);
-    if (!own) {
-      own = await candles(symbol, CHART_BARS, true);
-      state.charts.set(symbol, own);
-    }
-    if (seq !== state.drawSeq) return;
-    drawChart(symbol, own);
-    setTimeout(() => { if (seq === state.drawSeq) drawChart(symbol, own); }, 120);
-  } catch (e) {
-    $("chartRange").textContent = "History unavailable for this market";
-  }
-}
-
-function drawChart(symbol, c) {
-  if (!chartApi || !c.length) return;
-  const res = analyze(c);
-  const settled = res.signals.map(s => settle(c, s));
-  const focusIdx = state.focusT == null ? -1
-    : settled.findIndex(s => Math.floor(s.t / 1000) === Math.floor(state.focusT));
-  const focusSig = focusIdx >= 0 ? settled[focusIdx] : settled[settled.length - 1];
-
-  candleSeries.setData(c.map(k => ({ time: Math.floor(k.t / 1000), open: k.o, high: k.h, low: k.l, close: k.c })));
-  const pts = arr => arr.map((v, i) => ({ time: Math.floor(c[i].t / 1000), value: v })).filter(p => Number.isFinite(p.value));
-  bandS.sup.setData(pts(res.sup));
-  bandS.mid.setData(pts(res.mid));
-  bandS.res.setData(pts(res.res));
-
-  markersApi.setMarkers(settled.map(s => {
-    const t = Math.floor(s.t / 1000);
-    const isFocus = focusSig && Math.floor(focusSig.t / 1000) === t;
-    const hit = s.outcome === "TP" ? { position: "aboveBar", shape: "arrowDown", color: "#60a5fa" }
-      : { position: "belowBar", shape: "arrowUp", color: "#eab308" };
-    return {
-      time: t, position: hit.position, shape: hit.shape, color: hit.color,
-      size: isFocus ? 2 : 1.2,
-      text: isFocus ? (s.outcome === "TP" ? "TP" : "OPEN") : "",
-    };
-  }));
-
-  for (const pl of priceLines) { try { candleSeries.removePriceLine(pl); } catch {} }
-  priceLines = [];
-  if (focusSig) {
-    const add = (price, color, title, style) => {
-      const pl = candleSeries.createPriceLine({ price, color, lineWidth: 1, lineStyle: style, axisLabelVisible: true, title });
-      priceLines.push(pl);
-    };
-    add(focusSig.tp, "#60a5fa", `TP ${pct((focusSig.tp / focusSig.entry - 1) * 100)}`, LightweightCharts.LineStyle.Dotted);
-    add(focusSig.entry, "#94a3b8", "Entry", LightweightCharts.LineStyle.Solid);
-  }
-
-  const n = c.length, viewBars = 170;
-  const ts = chartApi.timeScale();
-  let from, to;
-  if (focusSig && state.focusT != null) {
-    let idx = c.findIndex(k => Math.floor(k.t / 1000) >= Math.floor(state.focusT));
-    if (idx < 0) idx = n - 1;
-    from = Math.max(0, idx - Math.round(viewBars * 0.62));
-    to = Math.min(n + 6, Math.max(from + viewBars, idx + 26));
-    if (to - from < viewBars) from = Math.max(0, to - viewBars);
-  } else {
-    from = Math.max(0, n + 6 - viewBars);
-    to = n + 6;
-  }
-  ts.setVisibleLogicalRange({ from, to });
-
-  const m = state.markets.find(x => x.symbol === symbol);
-  const last = c[c.length - 1];
-  $("chartPrice").textContent = fmt(m ? (m.price ?? last.c) : last.c);
-  const chg = m ? m.change : null;
-  $("chartChange").textContent = chg == null ? "" : pct(chg);
-  $("chartChange").className = `num ${chg == null ? "" : chg >= 0 ? "up" : "down"}`;
-  $("chartChange").style.color = chg == null ? "" : chg >= 0 ? "#34d399" : "#fb7185";
-  if (focusSig) {
-    $("chartState").className = `chip ${focusSig.outcome === "TP" ? "blue" : "amber"}`;
-    $("chartState").textContent = focusSig.outcome === "TP" ? `TP hit in ${focusSig.days}d` : "Signal open";
-  }
-  $("chartRange").textContent = `D1 · ${c.length} candles · ${dayKey(c[0].t)} → ${dayKey(last.t)}`;
-  renderDrawings();
-}
-
-/* ============================================================================
-   DRAWING TOOLS
-   ============================================================================ */
-const DRAW_KEY = "shahab-radar-drawings-v1";
-const DRAW_COLOR = "#38bdf8", DRAW_LIME = "#a3e635", FIB_COLOR = "#a78bfa";
-let drawings = {};
-try { drawings = JSON.parse(localStorage.getItem(DRAW_KEY) || "{}") || {}; } catch { drawings = {}; }
-let tool = "none", draft = null, drawCanvas = null, drawCtx = null, drawDpr = 1;
-
-const TOOL_HINTS = {
-  none: "Cursor: drag the chart. Pick a tool to draw. Drawings are saved per coin.",
-  trend: "Trend line — drag from A to B.",
-  ray: "Ray — drag from the start point, it extends to the right.",
-  hline: "Horizontal line — click a price level.",
-  vline: "Vertical line — click a date.",
-  rect: "Rectangle — drag to box an area.",
-  fib: "Fib retracement — drag from swing low to swing high (or the reverse).",
-  text: "Text — click where the note should sit.",
-  ruler: "Measure — drag to see the move in price and %.",
-};
-
-function saveDrawings() {
-  try { localStorage.setItem(DRAW_KEY, JSON.stringify(drawings)); } catch {}
-}
-function shapesOf(symbol) {
-  if (!symbol) return [];
-  return drawings[symbol] || (drawings[symbol] = []);
-}
-
-function initDrawing() {
-  drawCanvas = $("draw");
-  drawCtx = drawCanvas.getContext("2d");
-  const wrap = $("chartWrap");
-  const resize = () => {
-    const r = wrap.getBoundingClientRect();
-    drawDpr = window.devicePixelRatio || 1;
-    drawCanvas.width = Math.max(1, Math.round(r.width * drawDpr));
-    drawCanvas.height = Math.max(1, Math.round(r.height * drawDpr));
-    drawCanvas.style.width = `${r.width}px`;
-    drawCanvas.style.height = `${r.height}px`;
-    renderDrawings();
-  };
-  new ResizeObserver(resize).observe(wrap);
-  resize();
-  chartApi.timeScale().subscribeVisibleLogicalRangeChange(() => renderDrawings());
-
-  const setTool = k => {
-    tool = k; draft = null;
-    document.querySelectorAll("#tools .tb[data-tool]").forEach(b => b.classList.toggle("on", b.dataset.tool === k));
-    drawCanvas.classList.toggle("active", k !== "none");
-    $("toolHint").textContent = TOOL_HINTS[k] || "";
-    renderDrawings();
-  };
-  document.querySelectorAll("#tools .tb[data-tool]").forEach(b => b.onclick = () => setTool(b.dataset.tool));
-  $("undoDraw").onclick = () => { const arr = shapesOf(state.selectedSymbol); arr.pop(); saveDrawings(); renderDrawings(); };
-  $("clearDraw").onclick = () => { if (state.selectedSymbol) drawings[state.selectedSymbol] = []; saveDrawings(); renderDrawings(); };
-
-  const point = e => {
-    const r = drawCanvas.getBoundingClientRect();
-    const x = e.clientX - r.left, y = e.clientY - r.top;
-    const p = candleSeries.coordinateToPrice(y);
-    const t = chartApi.timeScale().coordinateToTime(x);
-    return { x, y, p, t: t == null ? null : Number(t) };
-  };
-
-  drawCanvas.addEventListener("pointerdown", e => {
-    if (tool === "none") return;
-    const pt = point(e);
-    drawCanvas.setPointerCapture(e.pointerId);
-    if (tool === "hline" && Number.isFinite(pt.p)) { shapesOf(state.selectedSymbol).push({ type: "hline", p: pt.p }); saveDrawings(); renderDrawings(); return; }
-    if (tool === "vline" && pt.t != null) { shapesOf(state.selectedSymbol).push({ type: "vline", t: pt.t }); saveDrawings(); renderDrawings(); return; }
-    if (tool === "text") {
-      const text = window.prompt("Text note");
-      if (text && Number.isFinite(pt.p) && pt.t != null) { shapesOf(state.selectedSymbol).push({ type: "text", t: pt.t, p: pt.p, text }); saveDrawings(); renderDrawings(); }
-      return;
-    }
-    if (!Number.isFinite(pt.p) || pt.t == null) return;
-    draft = { type: tool, t1: pt.t, p1: pt.p, t2: pt.t, p2: pt.p };
-  });
-
-  drawCanvas.addEventListener("pointermove", e => {
-    if (!draft) return;
-    const pt = point(e);
-    if (Number.isFinite(pt.p)) draft.p2 = pt.p;
-    if (pt.t != null) draft.t2 = pt.t;
-    renderDrawings();
-  });
-
-  const finish = () => {
-    if (!draft) return;
-    const moved = draft.t1 !== draft.t2 || draft.p1 !== draft.p2;
-    if (moved) { shapesOf(state.selectedSymbol).push({ ...draft }); saveDrawings(); }
-    draft = null;
-    renderDrawings();
-  };
-  drawCanvas.addEventListener("pointerup", finish);
-  drawCanvas.addEventListener("pointercancel", () => { draft = null; renderDrawings(); });
-}
-
-function xOf(t) { const x = chartApi.timeScale().timeToCoordinate(t); return x == null ? null : x; }
-function yOf(p) { return candleSeries.priceToCoordinate(p); }
-
-function drawShape(ctx, s, W, H) {
-  ctx.lineWidth = 1.5;
-  ctx.strokeStyle = DRAW_COLOR;
-  ctx.fillStyle = "rgba(56,189,248,.10)";
-  ctx.font = "11px Inter, ui-sans-serif, system-ui, sans-serif";
-  ctx.setLineDash([]);
-
-  if (s.type === "hline") {
-    const y = yOf(s.p); if (y == null) return;
-    ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke();
-    tag(ctx, W - 4, y, ` ${fmt(s.p)} `, DRAW_COLOR, "right");
-    return;
-  }
-  if (s.type === "vline") {
-    const x = xOf(s.t); if (x == null) return;
-    ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke();
-    return;
-  }
-  if (s.type === "text") {
-    const x = xOf(s.t), y = yOf(s.p);
-    if (x == null || y == null) return;
-    ctx.fillStyle = "#e6e9ef";
-    ctx.font = "600 12px Inter, ui-sans-serif, system-ui, sans-serif";
-    ctx.fillText(s.text, x + 6, y - 6);
-    return;
-  }
-
-  const x1 = xOf(s.t1), x2 = xOf(s.t2), y1 = yOf(s.p1), y2 = yOf(s.p2);
-  if (x1 == null || x2 == null || y1 == null || y2 == null) return;
-
-  if (s.type === "rect") {
-    ctx.beginPath();
-    ctx.rect(Math.min(x1, x2), Math.min(y1, y2), Math.abs(x2 - x1), Math.abs(y2 - y1));
-    ctx.fill(); ctx.stroke();
-    return;
-  }
-
-  if (s.type === "fib") {
-    const levels = [0, 0.236, 0.382, 0.5, 0.618, 0.786, 1];
-    ctx.strokeStyle = FIB_COLOR;
-    ctx.setLineDash([4, 3]);
-    for (const lv of levels) {
-      const price = s.p1 + (s.p2 - s.p1) * lv;
-      const y = yOf(price);
-      if (y == null) continue;
-      ctx.beginPath(); ctx.moveTo(Math.min(x1, x2), y); ctx.lineTo(Math.max(x1, x2), y); ctx.stroke();
-      ctx.setLineDash([]);
-      ctx.fillStyle = FIB_COLOR;
-      ctx.fillText(`${lv.toFixed(3)}  ${fmt(price)}`, Math.max(x1, x2) + 6, y - 3);
-      ctx.setLineDash([4, 3]);
-    }
-    ctx.setLineDash([]);
-    return;
-  }
-
-  if (s.type === "ruler") {
-    const dP = s.p2 - s.p1, dPct = s.p1 ? (dP / s.p1) * 100 : 0;
-    const up = dPct >= 0;
-    ctx.strokeStyle = up ? DRAW_LIME : "#fb7185";
-    ctx.fillStyle = up ? "rgba(163,230,53,.13)" : "rgba(251,113,133,.13)";
-    ctx.beginPath(); ctx.rect(Math.min(x1, x2), Math.min(y1, y2), Math.abs(x2 - x1), Math.abs(y2 - y1)); ctx.fill();
-    ctx.setLineDash([5, 4]);
-    ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
-    ctx.setLineDash([]);
-    const label = `${up ? "+" : ""}${dPct.toFixed(2)}%  ·  ${fmt(Math.abs(dP))}`;
-    ctx.fillStyle = up ? DRAW_LIME : "#fb7185";
-    tag(ctx, (x1 + x2) / 2, (y1 + y2) / 2, ` ${label} `, up ? DRAW_LIME : "#fb7185", "center");
-    return;
-  }
-
-  /* trend + ray */
-  ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2);
-  if (s.type === "ray") {
-    const dx = x2 - x1;
-    if (dx !== 0) { const k = (W - x2) / dx; if (k > 0) ctx.lineTo(x2 + dx * k, y2 + (y2 - y1) * k); }
-  }
-  ctx.stroke();
-}
-
-function tag(ctx, x, y, text, color, align) {
-  ctx.font = "700 10.5px Inter, ui-sans-serif, system-ui, sans-serif";
-  const w = ctx.measureText(text).width + 8;
-  const bx = align === "right" ? x - w : align === "center" ? x - w / 2 : x;
-  ctx.fillStyle = color;
-  ctx.beginPath();
-  ctx.roundRect ? ctx.roundRect(bx, y - 9, w, 16, 4) : ctx.rect(bx, y - 9, w, 16);
-  ctx.fill();
-  ctx.fillStyle = "#0a0f02";
-  ctx.fillText(text.trim(), bx + 4, y + 2);
-}
-
-function renderDrawings() {
-  if (!drawCtx || !chartApi) return;
-  const W = drawCanvas.width / drawDpr, H = drawCanvas.height / drawDpr;
-  drawCtx.setTransform(drawDpr, 0, 0, drawDpr, 0, 0);
-  drawCtx.clearRect(0, 0, W, H);
-  for (const s of shapesOf(state.selectedSymbol)) drawShape(drawCtx, s, W, H);
-  if (draft) {
-    drawCtx.save();
-    drawCtx.globalAlpha = .85;
-    drawShape(drawCtx, draft, W, H);
-    if (draft.type !== "rect" && draft.type !== "ruler") {
-      for (const pt of [[draft.t1, draft.p1], [draft.t2, draft.p2]]) {
-        const x = xOf(pt[0]), y = yOf(pt[1]);
-        if (x == null || y == null) continue;
-        drawCtx.fillStyle = "#0a0d12"; drawCtx.strokeStyle = DRAW_COLOR;
-        drawCtx.beginPath(); drawCtx.arc(x, y, 3.5, 0, Math.PI * 2); drawCtx.fill(); drawCtx.stroke();
-      }
-    }
-    drawCtx.restore();
-  }
-}
-
-/* ============================================================================
-   REPORT — password 1213
-   ============================================================================ */
-const REPORT_PASSWORD = "1213";
-const reportCache = new Map();
-let lastReport = null;
-
-function openAuth() {
-  $("pwInput").value = ""; $("pwErr").hidden = true;
-  $("authModal").hidden = false;
-  setTimeout(() => $("pwInput").focus(), 40);
-}
-function closeAuth() { $("authModal").hidden = true; }
-function unlock() {
-  if ($("pwInput").value.trim() === REPORT_PASSWORD) {
-    closeAuth();
-    openReport();
-  } else {
-    $("pwErr").hidden = false;
-    $("pwInput").value = "";
-  }
-}
-
-function buildReportCoins() {
-  const box = $("coinList");
-  if (!box || box.dataset.built === "1") return;
-  box.dataset.built = "1";
-  const frag = document.createDocumentFragment();
-  for (const m of state.markets) {
-    const label = document.createElement("label");
-    label.dataset.sym = m.symbol;
-    label.innerHTML = `<input type="checkbox" value="${m.symbol}"> ${m.symbol}`;
-    frag.appendChild(label);
-  }
-  box.innerHTML = "";
-  box.appendChild(frag);
-}
-
-function yearsInit() {
-  const now = new Date().getUTCFullYear();
-  const from = $("fromYear"), to = $("toYear");
-  if (from.options.length) return;
-  for (let y = FIRST_YEAR; y <= now; y++) {
-    from.add(new Option(String(y), String(y)));
-    to.add(new Option(String(y), String(y)));
-  }
-  from.value = String(Math.max(FIRST_YEAR, now - 2));
-  to.value = String(now);
-}
-
-function openReport() {
-  yearsInit();
-  buildReportCoins();
-  $("reportModal").hidden = false;
-}
-function closeReport() { $("reportModal").hidden = true; }
-
-function selectedCoins() {
-  return Array.from(document.querySelectorAll("#coinList input:checked")).map(i => i.value);
-}
-
-/* Gate caps a candlestick request at 1000 points, so the full history is walked
-   backwards in ~2.5 year windows until the market's first candle. */
-const FIRST_YEAR = 2009;
-const HISTORY_START = Math.floor(Date.UTC(FIRST_YEAR, 0, 1) / 1000);
-const HISTORY_WINDOW = 900 * 86400;
-
-async function historyCandles(pair, sinceMs) {
-  const since = Math.max(HISTORY_START, Math.floor(sinceMs / 1000));
-  const found = new Map();
-  let end = Math.floor(Date.now() / 1000), empty = 0;
-  for (let guard = 0; guard < 12 && end > since; guard++) {
-    const start = Math.max(since, end - HISTORY_WINDOW);
-    let rows = [];
-    try {
-      rows = await api("/api/v4/spot/candlesticks", {
-        currency_pair: toPair(pair), interval: D1.iv, from: start, to: end,
-      });
-    } catch (e) { break; }
-    const parsed = parse(rows, D1.ms);
-    if (parsed.length) { empty = 0; for (const k of parsed) found.set(k.t, k); }
-    else if (++empty >= 2) break;   // no older candles for this market
-    end = start;
-  }
-  return [...found.values()].sort((a, b) => a.t - b.t);
-}
-
-async function coinSignals(symbol, fromMs) {
-  const key = `${symbol}|${fromMs}`;
-  if (reportCache.has(key)) return reportCache.get(key);
-  const m = state.markets.find(x => x.symbol === symbol);
-  /* 400 extra days before the range so the bands are warmed up at its start */
-  const own = await historyCandles(m ? m.pair : symbol, fromMs - 400 * 864e5);
-  const res = own.length > 2 * W + 10 ? analyze(own) : { signals: [] };
-  const rows = res.signals.map(s => settle(own, s));
-  reportCache.set(key, rows);
-  return rows;
-}
-
-function reportStats(rows) {
-  const hits = rows.filter(r => r.outcome === "TP");
-  const signals = rows.length, tp = hits.length;
-  const netPct = hits.reduce((a, r) => a + r.pnlPct, 0);
-  return {
-    signals, tp, open: signals - tp,
-    tpRate: signals ? (tp / signals) * 100 : null,
-    netPct, avgPct: tp ? netPct / tp : null,
-  };
-}
-
-function reportTable(coins, range) {
-  const head = `<thead><tr>
-    <th>Coin</th><th>Signals</th><th>TP</th><th>Open</th>
-    <th>TP rate</th><th>Net %</th><th>Avg % / TP</th></tr></thead>`;
-  let total = { signals: 0, tp: 0, open: 0, netPct: 0 };
-  const body = coins.map(c => {
-    const st = reportStats(c.rows);
-    total.signals += st.signals; total.tp += st.tp; total.open += st.open; total.netPct += st.netPct;
-    return `<tr>
-      <td><b>${c.symbol}</b></td>
-      <td>${st.signals}</td>
-      <td>${st.tp}</td>
-      <td>${st.open}</td>
-      <td>${st.tpRate == null ? "—" : st.tpRate.toFixed(1) + "%"}</td>
-      <td class="${st.netPct >= 0 ? "pos" : "neg"}">${pct(st.netPct)}</td>
-      <td>${st.avgPct == null ? "—" : pct(st.avgPct)}</td>
-    </tr>`;
-  }).join("");
-  const tpRate = total.signals ? (total.tp / total.signals) * 100 : null;
-  const foot = `<tfoot><tr>
-      <td>All selected (${coins.length})</td>
-      <td>${total.signals}</td><td>${total.tp}</td><td>${total.open}</td>
-      <td>${tpRate == null ? "—" : tpRate.toFixed(1) + "%"}</td>
-      <td class="${total.netPct >= 0 ? "pos" : "neg"}">${total.netPct >= 0 ? "+" : ""}${total.netPct.toFixed(2)}%</td>
-      <td>${total.tp ? pct(total.netPct / total.tp) : "—"}</td>
-    </tr></tfoot>`;
-  return `<p class="report-note">Daily signals · ${range.from} → ${range.to} · TP = the move to the grey midline · net % sums every TP trade with equal weight. No stop loss.</p>
-    <table>${head}<tbody>${body}</tbody>${foot}</table>`;
-}
-
-function reportText(coins, range, total) {
-  const pad = (s, n) => String(s).padEnd(n);
-  const padL = (s, n) => String(s).padStart(n);
-  const lines = [];
-  lines.push("SHAHAB RADAR — DAILY SIGNAL REPORT");
-  lines.push(`Range: ${range.from} → ${range.to}`);
-  lines.push(`Coins: ${coins.length}`);
-  lines.push("");
-  lines.push(pad("COIN", 12) + padL("SIGNALS", 9) + padL("TP", 6) + padL("OPEN", 6) + padL("TP%", 8) + padL("NET%", 10) + padL("AVG%", 9));
-  lines.push("-".repeat(60));
-  for (const c of coins) {
-    const st = reportStats(c.rows);
-    lines.push(
-      pad(c.symbol, 12) + padL(st.signals, 9) + padL(st.tp, 6) + padL(st.open, 6) +
-      padL(st.tpRate == null ? "-" : st.tpRate.toFixed(1), 8) +
-      padL(st.netPct.toFixed(2), 10) + padL(st.avgPct == null ? "-" : st.avgPct.toFixed(2), 9)
-    );
-  }
-  lines.push("-".repeat(60));
-  lines.push(pad("TOTAL", 12) + padL(total.signals, 9) + padL(total.tp, 6) + padL(total.open, 6) +
-    padL(total.tpRate == null ? "-" : total.tpRate.toFixed(1), 8) +
-    padL(total.netPct.toFixed(2), 10) + padL(total.avgPct == null ? "-" : total.avgPct.toFixed(2), 9));
-  lines.push("Exit rule: TP only (the grey midline). No stop loss.");
-  lines.push("");
-  lines.push(`Data source: Gate.io daily candles · generated ${new Date().toISOString().slice(0, 10)}`);
-  return lines.join("\n");
-}
-
-async function runReport() {
-  const coinsSel = selectedCoins();
-  const from = Number($("fromYear").value), to = Number($("toYear").value);
-  const fromMs = Date.UTC(Math.min(from, to), 0, 1) / 1000;
-  const toMs = Date.UTC(Math.max(from, to) + 1, 0, 1) / 1000;
-  if (!coinsSel.length) {
-    $("reportBody").innerHTML = `<p class="report-note">Select at least one coin (or “All coins”).</p>`;
-    return;
-  }
-  const body = $("reportBody");
-  body.innerHTML = `<p class="report-note">Loading ${coinsSel.length} coin(s)…</p>`;
-  $("runReport").disabled = true;
-  state.reporting = true;
-  setProgress(0, "Report: pausing the scan while history is loaded…");
-
-  const queue = [...coinsSel];
-  const out = [];
-  let done = 0;
-  const worker = async () => {
-    for (;;) {
-      const sym = queue.shift();
-      if (!sym) return;
-      try {
-        const rows = (await coinSignals(sym, fromMs)).filter(r => r.t / 1000 >= fromMs && r.t / 1000 < toMs);
-        out.push({ symbol: sym, rows });
-      } catch (e) {
-        out.push({ symbol: sym, rows: [] });
-      }
-      done++;
-      $("reportProgress").textContent = `${done} / ${coinsSel.length}`;
-    }
-  };
-  await Promise.all(Array.from({ length: 4 }, worker));
-  state.reporting = false;
-
-  out.sort((a, b) => a.symbol.localeCompare(b.symbol));
-  const range = { from: `${new Date(fromMs * 1000).getUTCFullYear()}`, to: `${new Date((toMs - 86400) * 1000).getUTCFullYear()}` };
-  const total = out.reduce((acc, c) => {
-    const st = reportStats(c.rows);
-    acc.signals += st.signals; acc.tp += st.tp; acc.open += st.open; acc.netPct += st.netPct;
-    return acc;
-  }, { signals: 0, tp: 0, open: 0, netPct: 0 });
-  total.tpRate = total.signals ? (total.tp / total.signals) * 100 : null;
-  total.avgPct = total.tp ? total.netPct / total.tp : null;
-
-  body.innerHTML = reportTable(out, range);
-  $("reportText").textContent = reportText(out, range, total);
-  $("reportProgress").textContent = "";
-  $("runReport").disabled = false;
-  lastReport = { out, range, total };
-}
-
-/* ============================================================================
-   WIRING
-   ============================================================================ */
-function renderAll() {
-  renderSignals();
-  $("updated").textContent = state.total
-    ? `Round ${state.round + 1} · ${Math.min(state.scannedRound, state.total)} of ${state.total} markets`
-    : "—";
-  if (!state.selectedSymbol && state.signals.length) {
-    const newest = state.signals.slice().sort((a, b) => b.candleTime - a.candleTime)[0];
-    selectSymbol(newest.symbol, newest.candleTime / 1000);
-  }
-}
-
-function tickCountdown() {
-  const ms = D1.ms - (Date.now() % D1.ms);
-  const h = Math.floor(ms / 3600e3), mi = Math.floor((ms % 3600e3) / 60e3);
-  $("countdown").textContent = `Next daily candle in ${h}h ${mi}m`;
-}
-
-$("refresh").onclick = async () => {
-  state.done = false; state.cursor = 0; state.round = 0; state.scanned = 0; state.scannedRound = 0;
-  state.charts.clear();
-  setProgress(0, "Refreshing markets…");
-  try { await loadUniverse(true); } catch (e) {}
-  runRounds();
-};
-$("mode").onclick = async () => {
-  state.strict = !state.strict;
-  $("mode").textContent = `Quality: ${state.strict ? "High" : "All"}`;
-  state.markets.forEach(m => { m.sig = null; });
-  rebuildSignals();
-  renderSignals();
-  state.done = false;
-  state.cursor = 0; state.round = 0; state.scannedRound = 0;
-  saveCache();
-  runRounds();
-};
-
-$("reportBtn").onclick = openAuth;
-$("pwOk").onclick = unlock;
-$("pwCancel").onclick = closeAuth;
-$("pwInput").addEventListener("keydown", e => { if (e.key === "Enter") unlock(); });
-$("reportClose").onclick = closeReport;
-$("runReport").onclick = runReport;
-$("pickAll").onclick = () => {
-  document.querySelectorAll("#coinList input").forEach(i => { i.checked = true; });
-};
-$("pickNone").onclick = () => {
-  document.querySelectorAll("#coinList input").forEach(i => { i.checked = false; });
-};
-$("coinSearch").oninput = () => {
-  const q = $("coinSearch").value.trim().toUpperCase();
-  document.querySelectorAll("#coinList label").forEach(l => {
-    l.style.display = !q || l.dataset.sym.includes(q) ? "" : "none";
-  });
-};
-$("printReport").onclick = () => window.print();
-$("copyReport").onclick = async () => {
-  const txt = $("reportText").textContent;
-  if (!txt) return;
-  try { await navigator.clipboard.writeText(txt); $("copyReport").textContent = "Copied"; setTimeout(() => $("copyReport").textContent = "Copy text", 1400); }
-  catch { window.prompt("Copy the report:", txt); }
-};
-
-window.__radar = { state, candles, historyCandles, coinSignals, toPair, analyze, settle, scanSlice, loadUniverse, saveCache, runRounds, drawings };
-
-(async function boot() {
-  initChart();
-  initDrawing();
-  tickCountdown();
-  try {
-    await loadUniverse(false);
-  } catch (e) {
-    paintStatus("Connection error", "warn");
-    setProgress(0, "Could not reach Gate.io — try Refresh.");
-  }
-  if (state.done) {
-    paintStatus("Saved", "live");
-    setProgress(1, `All ${state.total} markets checked · ${state.signals.length} signals saved`);
-    saveCache();
-  } else {
-    setProgress(state.scanned / Math.max(1, state.total), `Resuming · ${state.scanned} of ${state.total} markets`);
-    runRounds();
-  }
-  setInterval(tickCountdown, 30_000);
-  setInterval(() => { renderSignals(); }, 45_000);
-})();
-</script>
+<script type="module" src="app.js?v=10"></script>
 </body>
 </html>
