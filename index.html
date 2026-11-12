@@ -1,31 +1,32 @@
 <!doctype html>
-<html lang="fa" dir="rtl">
+<html lang="en" dir="ltr">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#ffffff">
-<meta name="description" content="شهاب رادار — رادار سیگنال چندتایم‌فریم با داده‌ی مستقیم از Gate.io و محاسبه‌ی کامل در مرورگر">
-<title>Shahab Radar — رادار سیگنال کریپتو</title>
+<meta name="description" content="Shahab Radar — daily crypto signal radar. Gate.io data fetched and analysed directly in the browser.">
+<title>Shahab Radar</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect width='24' height='24' rx='6' fill='%230b0b0c'/%3E%3Ccircle cx='12' cy='12' r='7' fill='none' stroke='%23a3e635' stroke-width='1.6'/%3E%3Cpath d='M12 12l5-5' stroke='%23a3e635' stroke-width='2' stroke-linecap='round'/%3E%3Ccircle cx='12' cy='12' r='1.6' fill='%23a3e635'/%3E%3C/svg%3E">
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource-variable/vazirmatn@5/index.css">
 <style>
   :root{
     --bg:#f5f6f7; --card:#fff; --line:#e4e6ea; --ink:#0b0b0c; --muted:#6b7280;
-    --lime:#a3e635; --lime-d:#65a30d; --green:#16a34a; --red:#ef4444; --blue:#0284c7;
+    --lime:#a3e635; --lime-d:#65a30d; --lime-soft:#f2fce0;
+    --green:#16a34a; --red:#ef4444; --blue:#0284c7;
     --radius:16px; --shadow:0 8px 30px rgba(15,23,42,.07);
     color-scheme: light;
   }
   *{box-sizing:border-box}
-  html,body{margin:0;background:var(--bg);color:var(--ink);font-family:"Vazirmatn Variable",Vazirmatn,system-ui,Tahoma,sans-serif}
+  html,body{margin:0;background:var(--bg);color:var(--ink);
+    font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Inter,Roboto,Arial,sans-serif}
   body{overflow-x:clip;-webkit-tap-highlight-color:transparent}
-  .num{font-variant-numeric:tabular-nums;direction:ltr;unicode-bidi:isolate}
+  .num{font-variant-numeric:tabular-nums}
   button{font-family:inherit;cursor:pointer}
 
   /* ---------- header ---------- */
   header.top{position:sticky;top:0;z-index:30;background:rgba(255,255,255,.96);backdrop-filter:blur(10px);
     border-bottom:1px solid var(--line)}
   .top-row{display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:10px 14px}
-  .brand{display:flex;align-items:center;gap:8px;flex:0 0 auto;direction:ltr}
+  .brand{display:flex;align-items:center;gap:8px;flex:0 0 auto}
   .brand .mark{width:32px;height:32px;border-radius:10px;background:#111214;display:grid;place-items:center}
   .brand b{font-size:17px;letter-spacing:-.01em}
   .brand b span{color:var(--lime-d)}
@@ -33,7 +34,7 @@
   .pill.live{background:#ecfeff;color:#0e7490}
   .pill.warn{background:#fffbeb;color:#a16207}
   .dot{width:6px;height:6px;border-radius:50%;background:currentColor}
-  .top .actions{margin-inline-start:auto;display:flex;flex-wrap:wrap;align-items:center;gap:6px}
+  .top .actions{margin-left:auto;display:flex;flex-wrap:wrap;align-items:center;gap:6px}
   .btn{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:#fff;color:#1f2328;
     border-radius:10px;padding:7px 12px;font-size:13px;font-weight:600;transition:.15s}
   .btn:hover{background:#f8fafc}
@@ -48,57 +49,55 @@
   .scanline .t{font-size:10.5px;color:#475569;white-space:nowrap;font-weight:700}
 
   /* ---------- cards ---------- */
-  main{max-width:1120px;margin:0 auto;padding:12px;display:grid;gap:12px}
+  main{max-width:1180px;margin:0 auto;padding:12px;display:grid;gap:12px}
   .card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden}
   .card h2{margin:0;font-size:13px;font-weight:800}
   .card-head{display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:10px 14px;border-bottom:1px solid var(--line)}
-  .chip{display:inline-flex;align-items:center;gap:5px;border-radius:999px;padding:3px 9px;font-size:10.5px;font-weight:700;background:#f1f5f9;color:#475569}
-  .chip.lime{background:#f7fee7;color:#4d7c0f}
+  .chip{display:inline-flex;align-items:center;gap:5px;border-radius:999px;padding:3px 9px;font-size:10.5px;font-weight:700;
+    background:#f1f5f9;color:#475569;white-space:nowrap}
+  .chip.lime{background:var(--lime-soft);color:#4d7c0f}
   .chip.green{background:#ecfdf5;color:#047857}
-  .chip.blue{background:#eff6ff;color:#1d4ed8}
   .chip.red{background:#fef2f2;color:#b91c1c}
+  .chip.amber{background:#fffbeb;color:#b45309}
   .muted{color:var(--muted);font-size:11px}
 
-  .tabs{display:inline-flex;gap:4px;background:#f1f3f6;border-radius:10px;padding:3px}
-  .tabs button{border:0;background:transparent;border-radius:8px;padding:4px 9px;font-size:11.5px;font-weight:800;color:#64748b}
-  .tabs button.on{background:#fff;color:#0b0b0c;box-shadow:0 1px 3px rgba(15,23,42,.12)}
-
-  .note-line{padding:7px 14px;border-bottom:1px solid var(--line);background:#fbfcfd}
-
-  /* ---------- signals ---------- */
-  #signals{display:block;max-height:min(46dvh,460px);overflow:auto}
-  .srow{display:grid;grid-template-columns:1fr auto;gap:4px 12px;align-items:center;width:100%;
-    padding:10px 14px;border:0;border-bottom:1px solid var(--line);background:transparent;text-align:start;transition:.12s}
-  .srow:hover{background:#f8fafc}
-  .srow:last-child{border-bottom:0}
-  .srow .who{display:flex;flex-wrap:wrap;align-items:center;gap:6px;min-width:0}
+  /* ---------- signal strip ---------- */
+  .strip{display:flex;gap:10px;overflow-x:auto;padding:12px;direction:rtl;scroll-snap-type:x proximity;
+    scrollbar-width:thin}
+  .strip::-webkit-scrollbar{height:8px}
+  .strip::-webkit-scrollbar-thumb{background:#d7dbe2;border-radius:99px}
+  .sig{flex:0 0 auto;width:190px;direction:ltr;scroll-snap-align:start;
+    display:grid;gap:7px;padding:11px 12px;border:1px solid var(--line);border-radius:14px;background:#fff;
+    text-align:left;transition:.15s}
+  .sig:hover{border-color:#cbd5e1;box-shadow:0 6px 18px rgba(15,23,42,.07);transform:translateY(-1px)}
+  .sig.fresh{border-color:var(--lime);background:linear-gradient(180deg,#fafff2,#fff 60%)}
+  .sig-head{display:flex;align-items:center;gap:6px;justify-content:space-between}
+  .sig .sym{font-size:15px;font-weight:800;letter-spacing:-.01em}
   .tag{font-size:9px;font-weight:800;border-radius:5px;padding:2px 6px;background:#f1f5f9;color:#64748b;white-space:nowrap}
-  .tag.long{background:var(--lime);color:#000}
-  .tag.tf{background:#eef2ff;color:#4338ca}
-  .tag.hot{background:#fef2f2;color:#b91c1c}
-  .sym{font-size:13px;font-weight:800}
-  .when{font-size:10px;color:#9ca3af}
-  .nums{font-size:10.5px;color:#475569;display:none;gap:12px;direction:ltr}
-  .nums b{font-weight:800}
-  .dist{font-size:10.5px;font-weight:700;border-radius:999px;padding:3px 9px;white-space:nowrap}
+  .tag.d1{background:#eef2ff;color:#4338ca}
+  .badge-new{font-size:9px;font-weight:800;border-radius:999px;padding:2px 7px;background:var(--lime);color:#111;white-space:nowrap}
+  .sig-status{font-size:10.5px;font-weight:800;border-radius:8px;padding:4px 8px;text-align:center}
+  .sig-status.tp{background:#ecfdf5;color:#047857}
+  .sig-status.sl{background:#fef2f2;color:#b91c1c}
+  .sig-status.open{background:#f8fafc;color:#475569}
+  .sig-rows{display:grid;gap:3px;font-size:10.5px;color:#64748b}
+  .sig-rows span{display:flex;justify-content:space-between;gap:8px}
+  .sig-rows b{color:#0b0b0c;font-weight:800}
+  .sig-rows i{font-style:normal;color:#94a3b8}
+  .sig-foot{font-size:10px;color:#94a3b8;border-top:1px solid #f1f3f6;padding-top:6px;display:flex;
+    justify-content:space-between;gap:8px}
 
   /* ---------- chart ---------- */
   .chart-card .card-head{gap:10px}
   .sym-title{font-size:18px;font-weight:800}
-  #chart{height:min(62dvh,520px);min-height:300px;width:100%}
-  .stats{display:flex;flex-wrap:wrap;gap:6px;padding:9px 14px;border-top:1px solid var(--line);font-size:11px;color:#475569;align-items:center}
-  .stats strong{color:var(--ink)}
-
-  .acc{display:grid;grid-template-columns:repeat(auto-fit,minmax(132px,1fr));gap:8px;padding:10px 14px;border-top:1px solid var(--line);background:#fbfcfd}
-  .acc .box{border:1px solid var(--line);border-radius:12px;padding:8px 10px;background:#fff}
-  .acc .box .k{font-size:10px;color:#64748b;font-weight:700;display:block;margin-bottom:2px}
-  .acc .box .v{font-size:17px;font-weight:800;display:block}
-  .acc .box .s{font-size:10px;color:#94a3b8;display:block}
+  #chart{height:min(64dvh,540px);min-height:300px;width:100%}
+  .legend{display:flex;flex-wrap:wrap;gap:12px;padding:9px 14px;border-top:1px solid var(--line);font-size:10.5px;color:#475569;align-items:center}
+  .legend i{display:inline-block;width:14px;height:0;border-top:2px solid;margin-right:5px;vertical-align:middle}
 
   .boot{padding:14px;font-size:12px;color:#475569;display:flex;align-items:center;gap:10px}
-  footer{max-width:1120px;margin:0 auto;padding:0 14px 18px;color:#94a3b8;font-size:11px;display:flex;flex-wrap:wrap;gap:10px}
+  footer{max-width:1180px;margin:0 auto;padding:0 14px 18px;color:#94a3b8;font-size:11px;display:flex;flex-wrap:wrap;gap:10px}
 
-  @media (min-width:760px){ .srow{grid-template-columns:minmax(0,1.05fr) minmax(0,1fr) auto} .nums{display:flex} }
+  @media (min-width:900px){ .sig{width:200px} }
 </style>
 </head>
 <body>
@@ -114,32 +113,30 @@
           <circle cx="12" cy="12" r="1.6" fill="#a3e635"/>
         </svg>
       </span>
-      <b dir="ltr">Shahab <span>Radar</span></b>
+      <b>Shahab <span>Radar</span></b>
     </div>
-    <span id="status" class="pill warn"><span class="dot"></span><span id="statusText">در حال راه‌اندازی</span></span>
+    <span id="status" class="pill warn"><span class="dot"></span><span id="statusText">Starting</span></span>
     <span class="chip" id="countdown">—</span>
     <div class="actions">
-      <span class="chip lime" id="modeChip">دقت بالا</span>
-      <button class="btn" id="mode" title="فیلتر کیفیت سیگنال">تغییر حالت</button>
-      <button class="btn primary" id="refresh">به‌روزرسانی</button>
+      <button class="btn" id="mode" title="Toggle the signal quality filter">Quality: High</button>
+      <button class="btn primary" id="refresh">Refresh</button>
     </div>
   </div>
   <div class="scanline">
-    <span class="k">پیشرفت اسکن</span>
+    <span class="k">Scan progress</span>
     <span class="bar"><i id="scanBar"></i></span>
-    <span class="t" id="scanText">در حال دریافت بازارها…</span>
+    <span class="t" id="scanText">Loading markets…</span>
   </div>
 </header>
 
 <main>
   <section class="card" id="signals-sec">
     <div class="card-head">
-      <h2>سیگنال‌های بازار</h2>
+      <h2>Market signals</h2>
       <span class="chip lime" id="sigCount">—</span>
-      <span class="tabs" id="sigTabs" style="margin-inline-start:auto"></span>
+      <span class="muted" id="sigNote" style="margin-left:auto"></span>
     </div>
-    <div class="note-line"><span class="muted" id="sigNote"></span></div>
-    <div id="signals"><div class="boot"><span>در حال ساخت فهرست سیگنال‌ها…</span></div></div>
+    <div class="strip" id="signals"><div class="boot"><span>Building the signal list…</span></div></div>
   </section>
 
   <section class="card chart-card">
@@ -148,19 +145,23 @@
       <span class="num" id="chartPrice" style="font-size:17px;font-weight:800">—</span>
       <span class="num" id="chartChange" style="font-size:12px;font-weight:600"></span>
       <span class="chip" id="chartState">…</span>
-      <span class="tabs" id="chartTabs" style="margin-inline-start:auto"></span>
-      <span class="muted" id="chartRange"></span>
+      <span class="muted" id="chartRange" style="margin-left:auto"></span>
     </div>
     <div id="chart"></div>
-    <div class="stats" id="stats"></div>
-    <div class="acc" id="acc"></div>
+    <div class="legend">
+      <span><i style="border-color:#22c55e"></i>Support</span>
+      <span><i style="border-color:#94a3b8"></i>Midline = 🎯 TP</span>
+      <span><i style="border-color:#f87171"></i>Resistance</span>
+      <span>▶ Entry</span>
+      <span>🛑 Stop = 25% below entry</span>
+    </div>
   </section>
 </main>
 
 <footer>
-  <span>داده: Gate.io — مستقیم از مرورگر شما</span>
+  <span>Data: Gate.io — fetched directly in your browser</span>
   <span>·</span>
-  <span>محاسبه‌ی سیگنال‌ها در مرورگر</span>
+  <span>Signals calculated in your browser</span>
   <span>·</span>
   <span id="updated">—</span>
 </footer>
@@ -169,16 +170,15 @@
 <script type="module">
 /* ENGINE-START */
 /* ============================================================================
-   SIGNAL ENGINE
-   Setup: smoothed support band (KERNEL → ALMA) ± MULT·ATR. A signal fires when
-   the low pierces support and the candle closes back above it ("spring").
-   Risk: stop = 2.5·ATR below entry. Targets: TP1 = halfway to the midline,
-   TP2 = the midline itself. Measured on 1000-bar samples of the top markets:
-   TP1 hits ~53% (all setups) and ~57% (quality setups, expectancy positive);
-   every number shown in the accuracy panel is recomputed live.
+   SIGNAL ENGINE — daily only
+   Support band = smoothed close ± MULT·ATR, midline from the ALMA smoothing.
+   A signal fires when the low pierces support and the candle closes back above
+   it. Entry = that close. TP = the grey midline. Stop = 25% below entry.
+   Outcome: TP when price touches the midline, STOP when price trades 25% below
+   entry first, OPEN while neither has happened.
    ============================================================================ */
 const W = 80, BANDWIDTH = 2, OFFSET = 0.85, SIGMA = 8, ATR_LEN = 100, MULT = 4;
-const SL_ATR = 2.5, TP1_FRAC = 0.5, TREND_LOOKBACK = 5;
+const STOP_PCT = 0.25, TREND_LOOKBACK = 5;
 
 const KERNEL = (() => {
   const w = []; let sum = 0;
@@ -218,6 +218,7 @@ function bands(candles) {
   return { mid, sup, res, atr };
 }
 
+/* entry = close, TP = grey midline, stop = 25% below entry */
 function analyze(candles) {
   const b = bands(candles);
   const { mid, sup, atr } = b;
@@ -229,76 +230,39 @@ function analyze(candles) {
     const s = sup[i], ps = sup[i - 1];
     if (!Number.isFinite(s) || !Number.isFinite(ps) || !Number.isFinite(atr[i])) continue;
     if (!(c.l < s && p.l >= ps)) continue;
-    if (!(mid[i] > c.c)) continue;                    // a target must exist above entry
-    const reclaim = c.c > s;                          // closed back above support
+    if (!(mid[i] > c.c)) continue;                    // TP must sit above the entry
+    const reclaim = c.c > s;
     const trendUp = Number.isFinite(mid[i - TREND_LOOKBACK]) && mid[i] > mid[i - TREND_LOOKBACK];
     signals.push({
-      i, t: c.t, price: c.c, support: s, mid: mid[i], resistance: b.res[i], atr: atr[i],
-      reclaim, trendUp, quality: reclaim && trendUp, live: !c.x,
-      sl: c.c - SL_ATR * atr[i], tp1: c.c + (mid[i] - c.c) * TP1_FRAC, tp2: mid[i],
+      i, t: c.t, entry: c.c, support: s, mid: mid[i], resistance: b.res[i], atr: atr[i],
+      quality: reclaim && trendUp, live: !c.x,
+      tp: mid[i], sl: c.c * (1 - STOP_PCT),
     });
   }
   return { ...b, signals };
 }
 
-/* walk each signal forward: stop first (conservative), then TP1, then TP2 */
-function settle(candles, signals) {
-  const out = [];
-  for (const s of signals) {
-    const i = s.i, entry = s.price;
-    const pc = v => ((v / entry) - 1) * 100;
-    let res = { ...s, outcome: "OPEN", pnl: pc(candles[candles.length - 1].c), barsTo1: null, bars: null, note: "" };
-    let hit1 = false, barsTo1 = null;
-    for (let j = i + 1; j < candles.length; j++) {
-      const c = candles[j];
-      if (!hit1 && c.l <= s.sl) { res = { ...res, outcome: "SL", pnl: pc(s.sl), bars: j - i }; break; }
-      if (!hit1 && c.h >= s.tp1) { hit1 = true; barsTo1 = j - i; }
-      if (c.h >= s.tp2) { res = { ...res, outcome: "TP2", pnl: pc(s.tp2), bars: j - i, barsTo1: barsTo1 ?? (j - i) }; break; }
-      if (hit1 && j > i && c.c < entry) { res = { ...res, outcome: "TP1", pnl: pc(c.c), bars: j - i, barsTo1 }; break; }
-    }
-    if (hit1 && res.outcome === "OPEN") res = { ...res, outcome: "TP1", pnl: Math.max(res.pnl, pc(s.tp1)), barsTo1 };
-    if (!hit1 && res.outcome === "OPEN" && barsTo1) res.barsTo1 = barsTo1;
-    out.push(res);
+/* walk a signal forward: stop first (conservative), then the midline target */
+function settle(candles, s) {
+  const lastClose = candles[candles.length - 1].c;
+  for (let j = s.i + 1; j < candles.length; j++) {
+    const c = candles[j];
+    if (c.l <= s.sl) return { ...s, outcome: "STOP", days: j - s.i, pnlPct: -STOP_PCT * 100 };
+    if (c.h >= s.tp) return { ...s, outcome: "TP", days: j - s.i, pnlPct: (s.tp / s.entry - 1) * 100 };
   }
-  return out;
-}
-
-function statsOf(settled) {
-  if (!settled.length) return null;
-  const win = settled.filter(s => s.outcome === "TP1" || s.outcome === "TP2");
-  const full = settled.filter(s => s.outcome === "TP2");
-  const stopped = settled.filter(s => s.outcome === "SL");
-  const bars = settled.filter(s => s.barsTo1 != null).map(s => s.barsTo1);
-  return {
-    signals: settled.length, win: win.length, full: full.length, stopped: stopped.length,
-    open: settled.length - win.length - stopped.length,
-    hit: (win.length / settled.length) * 100,
-    hitFull: (full.length / settled.length) * 100,
-    avgPnl: settled.reduce((a, s) => a + (s.pnl ?? 0), 0) / settled.length,
-    avgBars: bars.length ? bars.reduce((a, b) => a + b, 0) / bars.length : null,
-  };
+  return { ...s, outcome: "OPEN", days: null, pnlPct: (lastClose / s.entry - 1) * 100 };
 }
 /* ENGINE-END */
 
-/* ============================================================================
-   DATA — Gate.io spot, straight from the browser (CORS is open)
-   ============================================================================ */
-const HOST = "https://api.gateio.ws";
-const UNIVERSE = 1000;   // top markets by 24h quote volume
-const BATCH = 110;       // markets scanned per pass
-const TTL = 20 * 60_000, CONC = 6;   // requests are paced by the api() queue
-const TF = [
-  { k: "15m", iv: "15m", ms: 900e3,   bars: 500, label: "۱۵m" },
-  { k: "1h",  iv: "1h",  ms: 3600e3,  bars: 500, label: "۱h"  },
-  { k: "4h",  iv: "4h",  ms: 14400e3, bars: 500, label: "۴h"  },
-  { k: "1d",  iv: "1d",  ms: 864e5,   bars: 500, label: "۱d"  },
-];
-const TFK = TF.map(t => t.k);
-const tfOf = k => TF.find(t => t.k === k);
-const STABLE = new Set("usdt usdc dai tusd busd fdusd usde usds usdd pyusd usdg rlusd lusd susd usdp eurc eurt frax gho usdb usdx ousd mim usd1".split(" "));
-
-const toPair = s => s.includes("_") ? s.toUpperCase() : `${s.replace(/USDT$/i, "")}_USDT`.toUpperCase();
 const sleep = ms => new Promise(r => setTimeout(r, ms));
+const HOST = "https://api.gateio.ws";
+const UNIVERSE = 1000;
+const BATCH = 110;
+const TTL = 20 * 60_000, CONC = 6;
+const D1 = { k: "1d", iv: "1d", ms: 864e5, bars: 500 };
+const CHART_BARS = 900;
+const STABLE = new Set("usdt usdc dai tusd busd fdusd usde usds usdd pyusd usdg rlusd lusd susd usdp eurc eurt frax gho usdb usdx ousd mim usd1".split(" "));
+const toPair = s => s.includes("_") ? s.toUpperCase() : `${s.replace(/USDT$/i, "")}_USDT`.toUpperCase();
 
 /* Gate throttles a browser that fires thousands of calls, and a refused call
    arrives without CORS headers. Every request therefore takes a slot in one
@@ -360,17 +324,15 @@ async function universe() {
   return ranked.slice(0, UNIVERSE).map((m, i) => ({ ...m, rank: i + 1 }));
 }
 
-/* Gate answers from/to windows with a payload the browser cannot read
-   (no CORS header on that path), so we always ask for the last N candles. */
-async function candles(pair, tf, bars, priority = false) {
+async function candles(pair, bars, priority = false) {
   const rows = await api("/api/v4/spot/candlesticks", {
-    currency_pair: toPair(pair), interval: tf.iv, limit: Math.min(1000, Math.max(200, bars)),
+    currency_pair: toPair(pair), interval: D1.iv, limit: Math.min(1000, Math.max(200, bars)),
   }, priority ? 5 : 3, priority);
-  return parse(rows, tf.ms).slice(-bars);
+  return parse(rows, D1.ms).slice(-bars);
 }
 
 /* ---- snapshot cache -------------------------------------------------------- */
-const KEY = "shahab-radar-v5";
+const KEY = "shahab-radar-d1-v6";
 let snap = null;
 function loadCache() {
   try {
@@ -380,10 +342,7 @@ function loadCache() {
   } catch { return null; }
 }
 function saveCache() {
-  try {
-    if (!snap) return;
-    localStorage.setItem(KEY, JSON.stringify(snap));
-  } catch { /* storage full: keep running without cache */ }
+  try { if (snap) localStorage.setItem(KEY, JSON.stringify(snap)); } catch {}
 }
 
 /* ============================================================================
@@ -391,72 +350,71 @@ function saveCache() {
    ============================================================================ */
 const state = {
   markets: [], signals: [], at: 0, cursor: 0, round: 0, gen: 0, scannedRound: 0,
-  busy: false, total: 0, scanned: 0,
-  selected: null, tf: "1d", sigTf: "all", strict: true, charts: new Map(), focusT: null, drawSeq: 0,
+  busy: false, total: 0, scanned: 0, strict: true, charts: new Map(), focusT: null, drawSeq: 0,
 };
 const $ = id => document.getElementById(id);
 const fmt = v => v == null || !Number.isFinite(v) ? "—"
   : Math.abs(v) >= 1000 ? v.toLocaleString("en-US", { maximumFractionDigits: 2 })
   : v.toLocaleString("en-US", { maximumSignificantDigits: 6 });
 const pct = v => v == null || !Number.isFinite(v) ? "—" : `${v > 0 ? "+" : ""}${v.toFixed(2)}%`;
-const fa = n => Number(n).toLocaleString("fa-IR", { maximumFractionDigits: 0 });
-const dayKey = t => new Date(t).toLocaleDateString("fa-IR", { day: "2-digit", month: "2-digit" });
-const timeKey = t => new Date(t).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", hour12: false });
-const when = (t, tfMs) => Date.now() - t < Math.max(86_400_000, tfMs * 3) ? timeKey(t) : `${dayKey(t)} ${timeKey(t)}`;
+const dayKey = t => new Date(t).toLocaleDateString("en-US", { month: "short", day: "numeric" });
+const stamp = t => `${dayKey(t)} ${new Date(t).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", hour12: false })}`;
 
 function paintStatus(text, tone) {
   $("status").className = `pill ${tone || "warn"}`;
   $("statusText").textContent = text;
 }
-
 function setProgress(frac, text) {
   $("scanBar").style.width = `${Math.round(Math.min(1, Math.max(0, frac)) * 100)}%`;
   if (text) $("scanText").textContent = text;
 }
 
+/* ============================================================================
+   SIGNAL STRIP — newest on the right, older to the left
+   ============================================================================ */
+function outcomeChip(s) {
+  if (s.outcome === "TP") return `<span class="sig-status tp">🎯 TP hit${s.days ? ` · ${s.days}d` : ""}</span>`;
+  if (s.outcome === "STOP") return `<span class="sig-status sl">🛑 Stopped${s.days ? ` · ${s.days}d` : ""}</span>`;
+  return `<span class="sig-status open">⏳ Open</span>`;
+}
+
 function renderSignals() {
   const box = $("signals");
-  /* newest candle first — the freshest signal always sits on top */
-  const list = state.signals
-    .filter(s => state.sigTf === "all" || s.tf === state.sigTf)
-    .sort((a, b) => (b.candleTime - a.candleTime) || (TFK.indexOf(a.tf) - TFK.indexOf(b.tf)));
-  $("sigCount").textContent = `${fa(list.length)} سیگنال`;
-  $("sigNote").textContent = state.strict ? "کیفیت بالا: بازگشت بالای حمایت + شیب مثبت" : "همه‌ی شکست‌های حمایت";
+  const list = state.signals.slice().sort((a, b) => b.candleTime - a.candleTime);
+  $("sigCount").textContent = `${list.length} signals`;
+  $("sigNote").textContent = state.strict ? "Quality filter on · close back above support + rising midline" : "All support breaks";
   if (!list.length) {
-    box.innerHTML = `<div class="boot"><span>${state.busy ? "در حال اسکن بازارها…" : "سیگنالی با این شرط پیدا نشد."}</span></div>`;
+    box.innerHTML = `<div class="boot"><span>${state.busy ? "Scanning markets…" : "No signal matches this filter."}</span></div>`;
     return;
   }
+  const weekAgo = Date.now() - 7 * 864e5;
   const frag = document.createDocumentFragment();
   for (const s of list) {
-    const m = state.markets.find(x => x.symbol === s.symbol);
-    const tfMs = tfOf(s.tf).ms;
-    const hot = Date.now() - s.candleTime <= tfMs * 2;      // issued on the last two candles
-    const price = m ? m.price : s.price;
-    const t1 = price >= s.tp1, t2 = price >= s.tp2;
-    const toT1 = price > 0 ? (s.tp1 / price - 1) * 100 : null;
-    const badge = t2 ? "به هدف دوم رسید" : t1 ? "به هدف اول رسید" : `${pct(toT1)} تا هدف اول`;
+    const fresh = s.candleTime >= weekAgo;
+    const toTp = ((s.tp / s.entry) - 1) * 100;
     const b = document.createElement("button");
-    b.className = "srow";
+    b.className = `sig${fresh ? " fresh" : ""}`;
     b.innerHTML = `
-      <span class="who">
-        <span class="tag long">LONG</span>
-        <span class="tag tf num">${s.tf}</span>
-        ${hot ? `<span class="tag hot">تازه</span>` : ""}
-        <span class="sym num">${s.symbol}</span>
-        <span class="when num">${when(s.candleTime, tfMs)}</span>
+      <span class="sig-head">
+        <span style="display:flex;align-items:center;gap:6px">
+          <span class="sym num">${s.symbol}</span>
+          <span class="tag d1">D1</span>
+        </span>
+        ${fresh ? `<span class="badge-new">New Signal</span>` : ""}
       </span>
-      <span class="nums num">
-        <span>ورود <b>${fmt(s.price)}</b></span>
-        <span style="color:#0369a1">هدف۱ <b>${fmt(s.tp1)}</b></span>
-        <span style="color:#1d4ed8">هدف۲ <b>${fmt(s.tp2)}</b></span>
-        <span style="color:#b91c1c">حدضرر <b>${fmt(s.sl)}</b></span>
+      ${outcomeChip(s)}
+      <span class="sig-rows num">
+        <span>Entry <b>${fmt(s.entry)}</b></span>
+        <span>🎯 TP <b>${fmt(s.tp)}</b> <i>${pct(toTp)}</i></span>
+        <span>🛑 SL <b>${fmt(s.sl)}</b> <i>−25%</i></span>
       </span>
-      <span class="dist num ${t2 ? "chip green" : t1 ? "chip lime" : "chip blue"}">${badge}</span>`;
+      <span class="sig-foot num">
+        <span>${stamp(s.candleTime)}</span>
+        <span>${s.outcome === "OPEN" ? pct(s.pnlPct) : `${s.days}d`}</span>
+      </span>`;
     b.onclick = () => {
-      state.tf = s.tf;
       $("chartSym").scrollIntoView({ behavior: "smooth", block: "center" });
-      renderTabs(); renderSignals();
-      selectSymbol(s.symbol, s.tf, Math.floor(s.signalTime / 1000));
+      selectSymbol(s.symbol, s.candleTime / 1000);
     };
     frag.appendChild(b);
   }
@@ -474,14 +432,14 @@ async function loadUniverse(force) {
     state.at = cached.at; state.cursor = cached.cursor || 0; state.round = cached.round || 0;
     state.total = cached.markets.length; state.scanned = cached.markets.filter(m => m.scannedAt).length;
     renderAll();
-    paintStatus("زنده", "live");
+    paintStatus("Live", "live");
     if (Date.now() - cached.at < 60_000) return;
   }
   const markets = await universe();
   const prev = new Map(state.markets.map(m => [m.symbol, m]));
   state.markets = markets.map(m => {
     const old = prev.get(m.symbol);
-    return old ? { ...m, sigs: old.sigs || {}, scannedAt: old.scannedAt || 0 } : { ...m, sigs: {}, scannedAt: 0 };
+    return old ? { ...m, sig: old.sig || null, scannedAt: old.scannedAt || 0 } : { ...m, sig: null, scannedAt: 0 };
   });
   state.total = state.markets.length;
   rebuildSignals();
@@ -490,14 +448,14 @@ async function loadUniverse(force) {
 
 function rebuildSignals() {
   const out = [];
-  for (const m of state.markets) for (const k of TFK) if (m.sigs?.[k]) out.push(m.sigs[k]);
+  for (const m of state.markets) if (m.sig) out.push(m.sig);
   state.signals = out;
 }
 
 async function scanSlice() {
   if (state.busy || !state.markets.length) return;
   state.busy = true;
-  paintStatus("در حال اسکن", "warn");
+  paintStatus("Scanning", "warn");
   const total = state.markets.length;
   const start = state.cursor % total;
   const slice = [];
@@ -513,29 +471,27 @@ async function scanSlice() {
       const m = queue.shift();
       if (!m) return;
       try {
-        const hist = {};
-        for (const tf of TF) hist[tf.k] = await candles(m.pair, tf, tf.bars);
-        m.sigs = {};
-        for (const tf of TF) {
-          const own = hist[tf.k];
-          if (own.length < 2 * W + 10) continue;
+        const own = await candles(m.pair, D1.bars);
+        m.sig = null;
+        if (own.length >= 2 * W + 10) {
           const a = analyze(own);
           const sig = a.signals[a.signals.length - 1];
-          if (!sig) continue;
-          if (state.strict && !sig.quality) continue;
-          m.sigs[tf.k] = {
-            id: `${m.symbol}-${tf.k}-${sig.t}`, symbol: m.symbol, tf: tf.k, rank: m.rank,
-            price: sig.price, support: sig.support, mid: sig.mid, sl: sig.sl, tp1: sig.tp1, tp2: sig.tp2,
-            quality: sig.quality, candleTime: sig.t,
-            signalTime: sig.live ? Date.now() : sig.t + tf.ms, live: sig.live,
-          };
+          if (sig && (!state.strict || sig.quality)) {
+            const out = settle(own, sig);
+            m.sig = {
+              id: `${m.symbol}-${sig.t}`, symbol: m.symbol, rank: m.rank,
+              entry: sig.entry, tp: sig.tp, sl: sig.sl, support: sig.support,
+              candleTime: sig.t, quality: sig.quality, live: sig.live,
+              outcome: out.outcome, days: out.days, pnlPct: out.pnlPct,
+            };
+          }
         }
         m.scannedAt = Date.now();
       } catch (e) { /* a market that fails keeps its previous state */ }
       done++; state.scanned++; state.scannedRound++;
       setProgress(state.scannedRound / slice.length,
-        `دور ${fa(state.round + 1)} · ${fa(state.scannedRound)} از ${fa(total)} بازار`);
-      if (done % 12 === 0) { rebuildSignals(); renderSignals(); }
+        `Round ${state.round + 1} · ${state.scannedRound} of ${total} markets`);
+      if (done % 10 === 0) { rebuildSignals(); renderSignals(); }
     }
   };
   await Promise.all(Array.from({ length: CONC }, worker));
@@ -543,13 +499,12 @@ async function scanSlice() {
 
   rebuildSignals();
   renderAll();
-  paintStatus("زنده", "live");
+  paintStatus("Live", "live");
   state.at = Date.now();
   snap = { at: state.at, cursor: state.cursor, round: state.round, markets: state.markets, signals: state.signals };
   saveCache();
 }
 
-/* one full sweep of every market, then a one-minute rest, then again */
 async function runRounds() {
   const gen = ++state.gen;
   for (;;) {
@@ -560,23 +515,23 @@ async function runRounds() {
       await scanSlice();
     }
     if (state.gen !== gen) return;
-    paintStatus("مکث ۱ دقیقه", "warn");
-    setProgress(1, `دور ${fa(state.round)} کامل شد · شروع دوباره تا ۱ دقیقه`);
+    paintStatus("Paused 1 min", "warn");
+    setProgress(1, `Round ${state.round} finished · restarting in 1 minute`);
     await sleep(60_000);
   }
 }
 
 /* ============================================================================
-   CHART + ACCURACY
+   CHART
    ============================================================================ */
 let chartApi = null, candleSeries = null, bandS = null, markersApi = null, priceLines = [];
 
 function initChart() {
   const chart = LightweightCharts.createChart($("chart"), {
     autoSize: true,
-    layout: { background: { type: "solid", color: "#ffffff" }, textColor: "#131722", fontFamily: "Vazirmatn Variable, sans-serif", fontSize: 11, attributionLogo: true },
+    layout: { background: { type: "solid", color: "#ffffff" }, textColor: "#131722", fontFamily: "ui-sans-serif, system-ui, sans-serif", fontSize: 11, attributionLogo: true },
     grid: { vertLines: { visible: false }, horzLines: { color: "#f4f6f9" } },
-    rightPriceScale: { borderVisible: false, entireTextOnly: true, scaleMargins: { top: 0.14, bottom: 0.14 } },
+    rightPriceScale: { borderVisible: false, entireTextOnly: true, scaleMargins: { top: 0.16, bottom: 0.16 } },
     timeScale: { borderVisible: false, timeVisible: false, rightOffset: 5, barSpacing: 9, minBarSpacing: 1.2 },
     crosshair: { mode: 0, vertLine: { visible: false, labelVisible: false }, horzLine: { labelVisible: false } },
   });
@@ -584,100 +539,85 @@ function initChart() {
     upColor: "#26a69a", downColor: "#ef5350", borderVisible: false,
     wickUpColor: "#26a69a", wickDownColor: "#ef5350", priceLineVisible: false,
   });
-  const line = (color, width, style, visible) => chart.addSeries(LightweightCharts.LineSeries, {
+  const line = (color, width, style) => chart.addSeries(LightweightCharts.LineSeries, {
     color, lineWidth: width, lineStyle: style, priceLineVisible: false, lastValueVisible: false,
-    crosshairMarkerVisible: false, visible, autoscaleInfoProvider: () => null,
+    crosshairMarkerVisible: false, autoscaleInfoProvider: () => null,
   });
   bandS = {
-    sup: line("#22c55e", 1, LightweightCharts.LineStyle.Dashed, true),
-    mid: line("#94a3b8", 1, LightweightCharts.LineStyle.Solid, true),
-    res: line("#f87171", 1, LightweightCharts.LineStyle.Dashed, true),
+    sup: line("#22c55e", 1, LightweightCharts.LineStyle.Dashed),
+    mid: line("#94a3b8", 1, LightweightCharts.LineStyle.Solid),
+    res: line("#f87171", 1, LightweightCharts.LineStyle.Dashed),
   };
   markersApi = LightweightCharts.createSeriesMarkers(candleSeries, []);
   chartApi = chart;
 }
 
-async function selectSymbol(symbol, tf, focusT) {
-  state.selected = symbol;
-  if (tf) state.tf = tf;
+async function selectSymbol(symbol, focusT) {
+  const seq = ++state.drawSeq;          // a slower earlier load must not overwrite the chart
   state.focusT = focusT == null ? null : focusT;
-  const seq = ++state.drawSeq;                 // a slower earlier load must not overwrite the chart
-  renderTabs();
   $("chartSym").textContent = symbol;
   $("chartState").textContent = "…";
-  $("stats").innerHTML = `<span class="muted">در حال بارگذاری تاریخچه…</span>`;
-  $("acc").innerHTML = "";
-  const key = `${symbol}:${state.tf}`;
+  $("chartState").className = "chip";
   try {
-    let entry = state.charts.get(key);
-    if (!entry) {
-      const t = tfOf(state.tf);
-      const own = await candles(`${symbol}USDT`, { ...t, bars: 960 }, 960, true);
-      entry = { own, at: Date.now() };
-      state.charts.set(key, entry);
+    let own = state.charts.get(symbol);
+    if (!own) {
+      own = await candles(symbol, CHART_BARS, true);
+      state.charts.set(symbol, own);
     }
     if (seq !== state.drawSeq) return;
-    drawChart(symbol, entry);
-    setTimeout(() => { if (seq === state.drawSeq) drawChart(symbol, entry); }, 120);
+    drawChart(symbol, own);
+    setTimeout(() => { if (seq === state.drawSeq) drawChart(symbol, own); }, 120);
   } catch (e) {
-    $("stats").innerHTML = `<span class="muted">تاریخچه‌ی این بازار در دسترس نیست.</span>`;
+    $("chartRange").textContent = "History unavailable for this market";
   }
 }
 
-function drawChart(symbol, entry) {
-  if (!chartApi || !entry.own.length) return;
-  const tf = tfOf(state.tf);
-  const c = entry.own;
+function drawChart(symbol, c) {
+  if (!chartApi || !c.length) return;
   const res = analyze(c);
-  const all = settle(c, res.signals);
-  const strict = settle(c, res.signals.filter(s => s.quality));
-  const stAll = statsOf(all), stStrict = statsOf(strict);
-  const shown = state.strict ? strict : all;
+  const settled = res.signals.map(s => settle(c, s));
+  const focusIdx = state.focusT == null ? -1
+    : settled.findIndex(s => Math.floor(s.t / 1000) === Math.floor(state.focusT));
+  const focusSig = focusIdx >= 0 ? settled[focusIdx] : settled[settled.length - 1];
 
   candleSeries.setData(c.map(k => ({ time: Math.floor(k.t / 1000), open: k.o, high: k.h, low: k.l, close: k.c })));
   const pts = arr => arr.map((v, i) => ({ time: Math.floor(c[i].t / 1000), value: v })).filter(p => Number.isFinite(p.value));
   bandS.sup.setData(pts(res.sup));
   bandS.mid.setData(pts(res.mid));
   bandS.res.setData(pts(res.res));
-  /* every signal of the current timeframe is marked; the focused one stands out */
-  const byTime = new Map();
-  for (const s of all) {
+
+  /* every daily signal is marked: 🎯 target hit, 🛑 stopped, ⏳ still open */
+  markersApi.setMarkers(settled.map(s => {
     const t = Math.floor(s.t / 1000);
-    const prev = byTime.get(t);
-    if (!prev || (!prev.quality && s.quality)) byTime.set(t, s);
-  }
-  markersApi.setMarkers([...byTime.values()].sort((a, b) => a.t - b.t).map(s => {
-    const t = Math.floor(s.t / 1000);
-    const isFocus = state.focusT != null && t === state.focusT;
+    const isFocus = focusSig && Math.floor(focusSig.t / 1000) === t;
+    const hit = s.outcome === "TP" ? { position: "aboveBar", shape: "arrowDown", color: "#16a34a", text: "🎯" }
+      : s.outcome === "STOP" ? { position: "belowBar", shape: "arrowDown", color: "#ef4444", text: "🛑" }
+      : { position: "belowBar", shape: "arrowUp", color: "#eab308", text: "⏳" };
     return {
-      time: t, position: "belowBar", shape: "arrowUp", text: "",
-      color: isFocus ? "#111827" : s.outcome === "TP2" ? "#16a34a" : s.outcome === "TP1" ? "#84cc16" : s.quality ? "#eab308" : "#cbd5e1",
-      size: isFocus ? 2.2 : s.quality ? 1.1 : 0.7,
+      time: t, position: hit.position, shape: hit.shape, color: hit.color,
+      size: isFocus ? 2 : 1.2,
+      text: isFocus ? `${hit.text} ${s.outcome === "TP" ? "TP" : s.outcome === "STOP" ? "Stop" : "Open"}` : "",
     };
   }));
 
   for (const pl of priceLines) { try { candleSeries.removePriceLine(pl); } catch {} }
   priceLines = [];
-  const focusSig = state.focusT == null ? null : all.find(s => Math.floor(s.t / 1000) === state.focusT) || null;
-  const lastSig = focusSig || shown[shown.length - 1] || all[all.length - 1];
-  if (lastSig) {
+  if (focusSig) {
     const add = (price, color, title, style) => {
       const pl = candleSeries.createPriceLine({ price, color, lineWidth: 1, lineStyle: style, axisLabelVisible: true, title });
       priceLines.push(pl);
     };
-    add(lastSig.tp2, "#0284c7", "هدف۲", LightweightCharts.LineStyle.Dotted);
-    add(lastSig.tp1, "#16a34a", "هدف۱", LightweightCharts.LineStyle.Dotted);
-    add(lastSig.sl, "#ef4444", "حدضرر", LightweightCharts.LineStyle.Dashed);
-    if (focusSig) add(focusSig.price, "#475569", "ورود", LightweightCharts.LineStyle.Solid);
+    add(focusSig.tp, "#16a34a", `🎯 TP ${pct((focusSig.tp / focusSig.entry - 1) * 100)}`, LightweightCharts.LineStyle.Dotted);
+    add(focusSig.entry, "#475569", "▶ Entry", LightweightCharts.LineStyle.Solid);
+    add(focusSig.sl, "#ef4444", "🛑 SL −25%", LightweightCharts.LineStyle.Dashed);
   }
 
-  /* readable window instead of squeezing all 960 candles into the width */
-  const n = c.length;
-  const viewBars = state.tf === "15m" ? 240 : state.tf === "1h" ? 220 : state.tf === "4h" ? 200 : 180;
+  /* readable window around the selected signal, or the latest candles */
+  const n = c.length, viewBars = 170;
   const ts = chartApi.timeScale();
   let from, to;
-  if (state.focusT != null) {
-    let idx = c.findIndex(k => Math.floor(k.t / 1000) >= state.focusT);
+  if (focusSig && state.focusT != null) {
+    let idx = c.findIndex(k => Math.floor(k.t / 1000) >= Math.floor(state.focusT));
     if (idx < 0) idx = n - 1;
     from = Math.max(0, idx - Math.round(viewBars * 0.62));
     to = Math.min(n + 6, Math.max(from + viewBars, idx + 26));
@@ -694,78 +634,42 @@ function drawChart(symbol, entry) {
   const chg = m ? m.change : null;
   $("chartChange").textContent = chg == null ? "" : pct(chg);
   $("chartChange").className = `num ${chg == null ? "" : chg >= 0 ? "up" : "down"}`;
-  const live = m?.sigs?.[state.tf];
-  $("chartState").className = `chip ${live ? "lime" : ""}`;
-  $("chartState").textContent = live ? "سیگنال فعال" : "بدون سیگنال";
-  $("chartRange").textContent = `${dayKey(c[0].t)} → ${dayKey(last.t)} · ${fa(c.length)} کندل`;
-
-  $("stats").innerHTML = `
-    <strong>برایند ${tf.label}</strong>
-    <span class="chip">${fa(stAll.signals)} سیگنال</span>
-    <span class="chip green">دقت هدف۱: ${stAll.hit.toFixed(0)}٪</span>
-    <span class="chip blue">دقت هدف۲: ${stAll.hitFull.toFixed(0)}٪</span>
-    ${stStrict && stStrict.signals ? `<span class="chip lime">با فیلتر کیفیت: ${stStrict.hit.toFixed(0)}٪ (${fa(stStrict.signals)})</span>` : ""}`;
-
-  const box = (k, v, s, tone) => `<div class="box"><span class="k">${k}</span><span class="v num ${tone || ""}">${v}</span><span class="s num">${s}</span></div>`;
-  $("acc").innerHTML = !stAll ? `<div class="muted">هنوز سیگنالی برای سنجش دقت در این بازار نیست.</div>` : `
-    ${box("دقت هدف اول", `${stAll.hit.toFixed(0)}٪`, `${fa(stAll.win)} از ${fa(stAll.signals)} معامله`)}
-    ${box("دقت هدف دوم", `${stAll.hitFull.toFixed(0)}٪`, `${fa(stAll.full)} به خط میانی`)}
-    ${box("حد ضرر خورده", `${fa(stAll.stopped)}`, `از ${fa(stAll.signals)} سیگنال`, "down")}
-    ${box("میانگین نتیجه", pct(stAll.avgPnl), "با حد ضرر و دو هدف", stAll.avgPnl >= 0 ? "up" : "down")}
-    ${stAll.avgBars != null ? box("زمان رسیدن به هدف۱", `${fa(Math.round(stAll.avgBars))} کندل`, tf.label, "") : ""}
-    ${stStrict && stStrict.signals ? box("دقت با فیلتر کیفیت", `${stStrict.hit.toFixed(0)}٪`, `${fa(stStrict.signals)} سیگنال برگزیده`, "up") : ""}`;
+  $("chartChange").style.color = chg == null ? "" : chg >= 0 ? "#16a34a" : "#ef4444";
+  if (focusSig) {
+    $("chartState").className = `chip ${focusSig.outcome === "TP" ? "green" : focusSig.outcome === "STOP" ? "red" : "amber"}`;
+    $("chartState").textContent = focusSig.outcome === "TP" ? `🎯 TP hit in ${focusSig.days}d`
+      : focusSig.outcome === "STOP" ? `🛑 Stopped in ${focusSig.days}d` : "⏳ Signal open";
+  }
+  $("chartRange").textContent = `D1 · ${c.length} candles · ${dayKey(c[0].t)} → ${dayKey(last.t)}`;
 }
 
 /* ============================================================================
    WIRING
    ============================================================================ */
-function renderTabs() {
-  const ct = $("chartTabs"); ct.innerHTML = "";
-  for (const t of TF) {
-    const b = document.createElement("button");
-    b.textContent = t.label; b.className = t.k === state.tf ? "on" : "";
-    b.onclick = () => { state.tf = t.k; renderTabs(); if (state.selected) selectSymbol(state.selected, t.k); };
-    ct.appendChild(b);
-  }
-  const st = $("sigTabs"); st.innerHTML = "";
-  for (const k of ["all", ...TFK]) {
-    const b = document.createElement("button");
-    b.textContent = k === "all" ? "همه" : k; b.className = k === state.sigTf ? "on" : "";
-    b.onclick = () => { state.sigTf = k; renderTabs(); renderSignals(); };
-    st.appendChild(b);
-  }
-  $("modeChip").textContent = state.strict ? "دقت بالا" : "همه سیگنال‌ها";
-  $("modeChip").className = `chip ${state.strict ? "lime" : ""}`;
-}
-
 function renderAll() {
-  renderTabs(); renderSignals();
+  renderSignals();
   $("updated").textContent = state.total
-    ? `دور ${fa(state.round + 1)} · ${fa(Math.min(state.scannedRound, state.total))} از ${fa(state.total)} بازار`
+    ? `Round ${state.round + 1} · ${Math.min(state.scannedRound, state.total)} of ${state.total} markets`
     : "—";
-  if (!state.selected && state.markets.length) selectSymbol(state.markets[0].symbol, state.tf);
 }
 
 function tickCountdown() {
-  const tf = tfOf(state.tf);
-  const ms = Math.floor(Date.now() / tf.ms) * tf.ms + tf.ms - Date.now();
+  const ms = D1.ms - (Date.now() % D1.ms);
   const h = Math.floor(ms / 3600e3), mi = Math.floor((ms % 3600e3) / 60e3);
-  const left = h > 0 ? `${fa(h)} ساعت و ${fa(mi)} دقیقه` : `${fa(mi)} دقیقه`;
-  $("countdown").textContent = `${left} تا پایان کندل ${tf.k}`;
+  $("countdown").textContent = `Next daily candle in ${h}h ${mi}m`;
 }
 
 $("refresh").onclick = async () => {
   localStorage.removeItem(KEY);
   state.charts.clear(); state.cursor = 0; state.round = 0; state.scanned = 0;
-  setProgress(0, "در حال دریافت بازارها…");
+  setProgress(0, "Loading markets…");
   await loadUniverse(true);
   runRounds();
 };
 $("mode").onclick = async () => {
   state.strict = !state.strict;
-  renderTabs();
-  if (state.selected) selectSymbol(state.selected, state.tf);
-  state.markets.forEach(m => { m.sigs = {}; });
+  $("mode").textContent = `Quality: ${state.strict ? "High" : "All"}`;
+  state.markets.forEach(m => { m.sig = null; });
   rebuildSignals();
   renderSignals();
   localStorage.removeItem(KEY);
@@ -773,20 +677,19 @@ $("mode").onclick = async () => {
   runRounds();
 };
 
-window.__radar = { state, candles, toPair, analyze, scanSlice, loadUniverse };
+window.__radar = { state, candles, toPair, analyze, settle, scanSlice, loadUniverse };
 
 (async function boot() {
   initChart();
-  renderTabs();
   tickCountdown();
   try {
     await loadUniverse(false);
   } catch (e) {
-    paintStatus("خطا در اتصال", "warn");
-    setProgress(0, "دسترسی به Gate.io برقرار نشد؛ دوباره تلاش کنید.");
+    paintStatus("Connection error", "warn");
+    setProgress(0, "Could not reach Gate.io — try Refresh.");
   }
-  runRounds();                           // full 1000-market sweep, 1 minute rest, repeat
-  setInterval(tickCountdown, 15_000);
+  runRounds();
+  setInterval(tickCountdown, 30_000);
   setInterval(() => { renderSignals(); }, 45_000);
 })();
 </script>
