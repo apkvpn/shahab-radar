@@ -189,7 +189,7 @@
   .coin-list label:hover{background:rgba(255,255,255,.07);color:#fff}
   .coin-list input{accent-color:#a3e635;width:13px;height:13px}
   .coin-list.hidden{display:none}
-  .report-body{font-size:12px;margin-top:6px}
+  .report-body{font-size:12px;margin-top:6px;overflow-x:auto}
   .report-body table{width:100%;border-collapse:separate;border-spacing:0;font-size:11.5px}
   .report-body th,.report-body td{padding:9px 10px;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap}
   .report-body th{color:var(--muted);font-weight:700;font-size:10px;text-transform:uppercase;letter-spacing:.09em;
@@ -209,11 +209,17 @@
     display:flex;flex-wrap:wrap;gap:10px}
 
   @media (min-width:900px){ .sig{width:208px} }
-  @media (max-width:560px){
+  @media (max-width:640px){
     .top-row{padding:10px 14px;gap:8px}
     main{padding:12px;gap:12px}
     .btn{padding:8px 11px;font-size:12.5px}
     .strip{padding:12px}
+    .toolbar{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none}
+    .toolbar::-webkit-scrollbar{display:none}
+    .toolbar .hint{display:none}
+    .modal-head{flex-wrap:wrap;align-items:flex-start}
+    .modal-box{padding:16px;border-radius:18px}
+    .report-body table{min-width:520px}
   }
 
   @media print{
@@ -229,7 +235,7 @@
     .report-body tfoot td{background:#f5f6f8;color:#111}
     .report-body .pos{color:#166534}
     .report-body .neg{color:#991b1b}
-    .report-body table{font-size:11px}
+    .report-body table{font-size:11px;min-width:0}
   }
 </style>
 </head>
@@ -341,7 +347,7 @@
   <div class="modal-box">
     <div class="modal-head">
       <h3>Signal report — daily</h3>
-      <div style="display:flex;gap:6px">
+      <div style="display:flex;gap:6px;flex-wrap:wrap">
         <button class="btn small" id="printReport">Print</button>
         <button class="btn small" id="copyReport">Copy text</button>
         <button class="btn small" id="reportClose">Close</button>
