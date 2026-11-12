@@ -81,9 +81,11 @@
   .sig-status.sl{background:#fef2f2;color:#b91c1c}
   .sig-status.open{background:#f8fafc;color:#475569}
   .sig-rows{display:grid;gap:3px;font-size:10.5px;color:#64748b}
-  .sig-rows span{display:flex;justify-content:space-between;gap:8px}
+  .sig-rows span{display:flex;align-items:baseline;gap:6px}
+  .sig-rows span > b{margin-left:auto}
   .sig-rows b{color:#0b0b0c;font-weight:800}
   .sig-rows i{font-style:normal;color:#94a3b8}
+  .sig-rows em{font-style:normal;font-weight:800;width:26px;display:inline-block}
   .sig-foot{font-size:10px;color:#94a3b8;border-top:1px solid #f1f3f6;padding-top:6px;display:flex;
     justify-content:space-between;gap:8px}
 
@@ -150,10 +152,10 @@
     <div id="chart"></div>
     <div class="legend">
       <span><i style="border-color:#22c55e"></i>Support</span>
-      <span><i style="border-color:#94a3b8"></i>Midline = 🎯 TP</span>
+      <span><i style="border-color:#94a3b8"></i>Midline = TP target</span>
       <span><i style="border-color:#f87171"></i>Resistance</span>
-      <span>▶ Entry</span>
-      <span>🛑 Stop = 25% below entry</span>
+      <span>Entry = signal close</span>
+      <span>Stop = 25% below entry</span>
     </div>
   </section>
 </main>
@@ -350,7 +352,7 @@ function saveCache() {
    ============================================================================ */
 const state = {
   markets: [], signals: [], at: 0, cursor: 0, round: 0, gen: 0, scannedRound: 0,
-  busy: false, total: 0, scanned: 0, strict: true, charts: new Map(), focusT: null, drawSeq: 0,
+  busy: false, total: 0, scanned: 0, strict: true, charts: new Map(), focusT: null, drawSeq: 0, selectedSymbol: null,
 };
 const $ = id => document.getElementById(id);
 const fmt = v => v == null || !Number.isFinite(v) ? "—"
@@ -373,9 +375,9 @@ function setProgress(frac, text) {
    SIGNAL STRIP — newest on the right, older to the left
    ============================================================================ */
 function outcomeChip(s) {
-  if (s.outcome === "TP") return `<span class="sig-status tp">🎯 TP hit${s.days ? ` · ${s.days}d` : ""}</span>`;
-  if (s.outcome === "STOP") return `<span class="sig-status sl">🛑 Stopped${s.days ? ` · ${s.days}d` : ""}</span>`;
-  return `<span class="sig-status open">⏳ Open</span>`;
+  if (s.outcome === "TP") return `<span class="sig-status tp">TP hit${s.days ? ` · ${s.days}d` : ""}</span>`;
+  if (s.outcome === "STOP") return `<span class="sig-status sl">Stopped${s.days ? ` · ${s.days}d` : ""}</span>`;
+  return `<span class="sig-status open">Open</span>`;
 }
 
 function renderSignals() {
@@ -405,8 +407,8 @@ function renderSignals() {
       ${outcomeChip(s)}
       <span class="sig-rows num">
         <span>Entry <b>${fmt(s.entry)}</b></span>
-        <span>🎯 TP <b>${fmt(s.tp)}</b> <i>${pct(toTp)}</i></span>
-        <span>🛑 SL <b>${fmt(s.sl)}</b> <i>−25%</i></span>
+        <span><em style="color:#047857">TP</em> <b>${fmt(s.tp)}</b> <i>${pct(toTp)}</i></span>
+        <span><em style="color:#b91c1c">SL</em> <b>${fmt(s.sl)}</b> <i>−25%</i></span>
       </span>
       <span class="sig-foot num">
         <span>${stamp(s.candleTime)}</span>
@@ -554,6 +556,7 @@ function initChart() {
 
 async function selectSymbol(symbol, focusT) {
   const seq = ++state.drawSeq;          // a slower earlier load must not overwrite the chart
+  state.selectedSymbol = symbol;
   state.focusT = focusT == null ? null : focusT;
   $("chartSym").textContent = symbol;
   $("chartState").textContent = "…";
@@ -586,17 +589,17 @@ function drawChart(symbol, c) {
   bandS.mid.setData(pts(res.mid));
   bandS.res.setData(pts(res.res));
 
-  /* every daily signal is marked: 🎯 target hit, 🛑 stopped, ⏳ still open */
+  /* every daily signal is marked: target hit, stopped, still open */
   markersApi.setMarkers(settled.map(s => {
     const t = Math.floor(s.t / 1000);
     const isFocus = focusSig && Math.floor(focusSig.t / 1000) === t;
-    const hit = s.outcome === "TP" ? { position: "aboveBar", shape: "arrowDown", color: "#16a34a", text: "🎯" }
-      : s.outcome === "STOP" ? { position: "belowBar", shape: "arrowDown", color: "#ef4444", text: "🛑" }
-      : { position: "belowBar", shape: "arrowUp", color: "#eab308", text: "⏳" };
+    const hit = s.outcome === "TP" ? { position: "aboveBar", shape: "arrowDown", color: "#16a34a" }
+      : s.outcome === "STOP" ? { position: "belowBar", shape: "arrowDown", color: "#ef4444" }
+      : { position: "belowBar", shape: "arrowUp", color: "#eab308" };
     return {
       time: t, position: hit.position, shape: hit.shape, color: hit.color,
       size: isFocus ? 2 : 1.2,
-      text: isFocus ? `${hit.text} ${s.outcome === "TP" ? "TP" : s.outcome === "STOP" ? "Stop" : "Open"}` : "",
+      text: isFocus ? (s.outcome === "TP" ? "TP" : s.outcome === "STOP" ? "STOP" : "OPEN") : "",
     };
   }));
 
@@ -607,9 +610,9 @@ function drawChart(symbol, c) {
       const pl = candleSeries.createPriceLine({ price, color, lineWidth: 1, lineStyle: style, axisLabelVisible: true, title });
       priceLines.push(pl);
     };
-    add(focusSig.tp, "#16a34a", `🎯 TP ${pct((focusSig.tp / focusSig.entry - 1) * 100)}`, LightweightCharts.LineStyle.Dotted);
-    add(focusSig.entry, "#475569", "▶ Entry", LightweightCharts.LineStyle.Solid);
-    add(focusSig.sl, "#ef4444", "🛑 SL −25%", LightweightCharts.LineStyle.Dashed);
+    add(focusSig.tp, "#16a34a", `TP ${pct((focusSig.tp / focusSig.entry - 1) * 100)}`, LightweightCharts.LineStyle.Dotted);
+    add(focusSig.entry, "#475569", "Entry", LightweightCharts.LineStyle.Solid);
+    add(focusSig.sl, "#ef4444", "SL −25%", LightweightCharts.LineStyle.Dashed);
   }
 
   /* readable window around the selected signal, or the latest candles */
@@ -637,8 +640,8 @@ function drawChart(symbol, c) {
   $("chartChange").style.color = chg == null ? "" : chg >= 0 ? "#16a34a" : "#ef4444";
   if (focusSig) {
     $("chartState").className = `chip ${focusSig.outcome === "TP" ? "green" : focusSig.outcome === "STOP" ? "red" : "amber"}`;
-    $("chartState").textContent = focusSig.outcome === "TP" ? `🎯 TP hit in ${focusSig.days}d`
-      : focusSig.outcome === "STOP" ? `🛑 Stopped in ${focusSig.days}d` : "⏳ Signal open";
+    $("chartState").textContent = focusSig.outcome === "TP" ? `TP hit in ${focusSig.days}d`
+      : focusSig.outcome === "STOP" ? `Stopped in ${focusSig.days}d` : "Signal open";
   }
   $("chartRange").textContent = `D1 · ${c.length} candles · ${dayKey(c[0].t)} → ${dayKey(last.t)}`;
 }
@@ -651,6 +654,11 @@ function renderAll() {
   $("updated").textContent = state.total
     ? `Round ${state.round + 1} · ${Math.min(state.scannedRound, state.total)} of ${state.total} markets`
     : "—";
+  /* open the chart on the newest signal as soon as one exists */
+  if (!state.selectedSymbol && state.signals.length) {
+    const newest = state.signals.slice().sort((a, b) => b.candleTime - a.candleTime)[0];
+    selectSymbol(newest.symbol, newest.candleTime / 1000);
+  }
 }
 
 function tickCountdown() {
