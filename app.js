@@ -1,5 +1,5 @@
 /* ============================================================================
-   SHABAH RADAR — app
+   SHAHAB RADAR — app
    ============================================================================ */
 /* ENGINE-START */
 /* ============================================================================
@@ -304,6 +304,7 @@ function renderSignals() {
         <span class="right">
           ${outcomeChip(s)}
           <button class="star${state.watch.has(s.symbol) ? " on" : ""}" data-star="${s.symbol}" title="Watch this coin">★</button>
+          <button class="bell${alerts[s.symbol] ? " on" : ""}" data-bell="${s.symbol}" title="${alerts[s.symbol] ? `Alert above ${alerts[s.symbol]}` : "Set a price alert"}">◔</button>
         </span>
       </span>
       ${fresh ? `<span class="badge-new">New Signal</span>` : ""}
@@ -324,6 +325,8 @@ function renderSignals() {
     el.onkeydown = e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); el.click(); } };
     const star = el.querySelector("[data-star]");
     if (star) star.onclick = e => { e.stopPropagation(); toggleWatch(s.symbol); };
+    const bellEl = el.querySelector("[data-bell]");
+    if (bellEl) bellEl.onclick = e => { e.stopPropagation(); setAlert(s.symbol); };
     frag.appendChild(el);
   }
   box.innerHTML = "";
@@ -1109,6 +1112,315 @@ document.addEventListener("keydown", e => {
   if (e.key === "/" && document.activeElement !== $("sigSearch")) { e.preventDefault(); $("sigSearch").focus(); }
   if (e.key === "Escape" && document.activeElement === $("sigSearch")) $("sigSearch").blur();
 });
+
+/* ============================================================================
+   ENHANCEMENTS — alerts, sound, chart overlays, per-coin stats, sharing
+   ============================================================================ */
+const ENH_CSS = `
+  .chart-card.fs{position:fixed;inset:0;z-index:75;border-radius:0;border:0;overflow:auto;background:#0a0d12}
+  .chart-card.fs #chart{height:calc(100dvh - 190px)}
+  .insight{display:flex;flex-wrap:wrap;gap:8px 16px;padding:10px 18px;border-top:1px solid var(--line);
+    font-size:11px;color:var(--muted);background:rgba(255,255,255,.015)}
+  .insight b{color:#f1f4f8;font-weight:700}
+  .insight .up{color:var(--up)}
+  .bell{border:0;background:transparent;color:#5b6572;font-size:12px;line-height:1;padding:2px 3px;border-radius:6px;transition:.15s}
+  .bell:hover{color:#fcd34d;background:rgba(251,191,36,.12)}
+  .bell.on{color:#fbbf24;text-shadow:0 0 10px rgba(251,191,36,.7)}
+  .iconbtn{border:1px solid var(--line);background:rgba(255,255,255,.04);color:var(--ink-2);border-radius:9px;
+    font-size:11.5px;font-weight:700;padding:5px 9px;transition:.15s}
+  .iconbtn:hover{color:#fff;border-color:rgba(255,255,255,.22)}
+  .iconbtn.on{background:linear-gradient(135deg,#e2ff7a,#a3e635);color:#0a0f02;border-color:rgba(200,247,81,.7)}
+  .share{display:inline-flex;gap:6px;align-items:center}
+`;
+(function injectEnhCss() { const st = document.createElement("style"); st.textContent = ENH_CSS; document.head.appendChild(st); })();
+
+const NOTIFY_KEY = "shahab-radar-notify-v1", ALERT_KEY = "shahab-radar-alerts-v1", PREF_KEY = "shahab-radar-view-v1";
+let notifyOn = false, soundOn = false, alerts = {};
+try { notifyOn = localStorage.getItem(NOTIFY_KEY) === "1"; } catch {}
+try { alerts = JSON.parse(localStorage.getItem(ALERT_KEY) || "{}") || {}; } catch { alerts = {}; }
+
+function saveAlerts() { try { localStorage.setItem(ALERT_KEY, JSON.stringify(alerts)); } catch {} }
+function savePrefs() { try { localStorage.setItem(PREF_KEY, JSON.stringify({ filter: state.filter, sort: state.sort })); } catch {} }
+
+/* short two-tone chime for new signals and alerts */
+let audioCtx = null;
+function chime() {
+  if (!soundOn) return;
+  try {
+    audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+    const t0 = audioCtx.currentTime;
+    [880, 1174].forEach((f, i) => {
+      const o = audioCtx.createOscillator(), g = audioCtx.createGain();
+      o.type = "sine"; o.frequency.value = f;
+      g.gain.setValueAtTime(0.0001, t0 + i * 0.16);
+      g.gain.exponentialRampToValueAtTime(0.18, t0 + i * 0.16 + 0.02);
+      g.gain.exponentialRampToValueAtTime(0.0001, t0 + i * 0.16 + 0.3);
+      o.connect(g); g.connect(audioCtx.destination);
+      o.start(t0 + i * 0.16); o.stop(t0 + i * 0.16 + 0.32);
+    });
+  } catch (e) {}
+}
+function notify(title, body) {
+  if (!notifyOn) return;
+  try {
+    if (!("Notification" in window) || Notification.permission !== "granted") return;
+    new Notification(title, { body, icon: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Ccircle cx='12' cy='12' r='9' fill='none' stroke='%23a3e635' stroke-width='2'/%3E%3C/svg%3E" });
+  } catch (e) {}
+}
+
+/* ---------- header alerts toggle ---------- */
+const actions = document.querySelector(".top .actions");
+if (actions) {
+  const bellBtn = document.createElement("button");
+  bellBtn.className = `btn${notifyOn ? " primary" : ""}`;
+  bellBtn.id = "notifyBtn";
+  bellBtn.title = "Alerts for new signals";
+  bellBtn.textContent = notifyOn ? "🔔 On" : "🔔";
+  bellBtn.onclick = async () => {
+    if (!notifyOn) {
+      let perm = "granted";
+      try { if ("Notification" in window) perm = await Notification.requestPermission(); } catch {}
+      notifyOn = perm === "granted";
+      soundOn = true;
+      if (!notifyOn) toast("Notifications blocked — sound alerts only");
+    } else { notifyOn = false; soundOn = false; }
+    try { localStorage.setItem(NOTIFY_KEY, notifyOn ? "1" : "0"); } catch {}
+    bellBtn.textContent = notifyOn ? "🔔 On" : "🔔";
+    bellBtn.className = `btn${notifyOn ? " primary" : ""}`;
+    if (notifyOn) { chime(); toast("Alerts on — you will hear and see new signals"); }
+  };
+  actions.insertBefore(bellBtn, actions.querySelector("#refresh"));
+}
+
+/* ---------- per-coin price alerts ---------- */
+function setAlert(sym) {
+  const m = marketOf(sym);
+  const cur = m && Number.isFinite(m.price) ? m.price : null;
+  const raw = window.prompt(`Price alert for ${sym}${cur ? ` (now ${fmt(cur)})` : ""}\nNotify me when the price goes above:`, alerts[sym] ?? "");
+  if (raw === null) return;
+  const val = Number(String(raw).replace(/,/g, ""));
+  if (!Number.isFinite(val) || val <= 0) {
+    if (String(raw).trim() === "" && alerts[sym] != null) { delete alerts[sym]; saveAlerts(); renderSignals(); toast(`Alert removed for ${sym}`); }
+    return;
+  }
+  alerts[sym] = val; saveAlerts(); renderSignals();
+  toast(`Alert set · ${sym} above ${fmt(val)}`);
+}
+function checkAlerts() {
+  const hit = [];
+  for (const [sym, target] of Object.entries(alerts)) {
+    const m = marketOf(sym);
+    if (!m || !Number.isFinite(m.price)) continue;
+    if (m.price >= target) { hit.push(`${sym} ${fmt(m.price)}`); delete alerts[sym]; }
+  }
+  if (hit.length) { saveAlerts(); renderSignals(); toast(`Alert: ${hit.join(" · ")} reached`); notify("Price alert", hit.join(" · ")); chime(); }
+}
+
+/* ---------- per-coin summary under the chart ---------- */
+function renderInsight(symbol, c) {
+  const box = document.getElementById("insight");
+  if (!box) return;
+  if (!symbol || !c || !c.length) { box.textContent = ""; return; }
+  const rows = analyze(c).signals.map(x => settle(c, x));
+  const tp = rows.filter(r => r.outcome === "TP");
+  const rate = rows.length ? (tp.length / rows.length) * 100 : null;
+  const avg = tp.length ? tp.reduce((a, r) => a + r.pnlPct, 0) / tp.length : null;
+  const best = rows.length ? Math.max(...rows.map(r => r.pnlPct)) : null;
+  const last = rows.length ? rows[rows.length - 1] : null;
+  const m = marketOf(symbol);
+  box.innerHTML = [
+    `<span>History <b>${rows.length}</b> signals</span>`,
+    `<span>TP <b class="up">${tp.length}</b>${rate == null ? "" : ` · <b class="up">${rate.toFixed(0)}%</b>`}</span>`,
+    `<span>Avg gain / TP <b class="up">${avg == null ? "—" : pct(avg)}</b></span>`,
+    `<span>Best <b>${best == null ? "—" : pct(best)}</b></span>`,
+    `<span>Last signal <b>${last ? dayKey(last.t) : "—"}</b></span>`,
+    m && Number.isFinite(m.volume) ? `<span>24h volume <b>$${fmt(m.volume)}</b></span>` : "",
+  ].filter(Boolean).join("");
+}
+
+/* ---------- chart overlays: volume, EMA, log scale, fullscreen ---------- */
+let volSeries = null, emaSeries = {}, emaOn = false, logOn = false;
+function enhBuildOverlays() {
+  if (!chartApi || volSeries) return;
+  volSeries = chartApi.addSeries(LightweightCharts.HistogramSeries, {
+    priceFormat: { type: "volume" }, priceScaleId: "vol", lastValueVisible: false, priceLineVisible: false,
+  }, 1);
+  chartApi.priceScale("vol").applyOptions({ scaleMargins: { top: 0.82, bottom: 0 } });
+  ["20", "50", "200"].forEach((n, i) => {
+    emaSeries[n] = chartApi.addSeries(LightweightCharts.LineSeries, {
+      color: ["#c8f751", "#60a5fa", "#fb7185"][i], lineWidth: 1, priceLineVisible: false,
+      lastValueVisible: false, crosshairMarkerVisible: false, visible: false,
+    });
+  });
+}
+function ema(vals, n) {
+  const k = 2 / (n + 1), out = [];
+  let prev = null;
+  vals.forEach((v, i) => { prev = i === 0 ? v : v * k + prev * (1 - k); out.push(prev); });
+  return out;
+}
+function enhDrawOverlays(c) {
+  enhBuildOverlays();
+  if (!volSeries) return;
+  volSeries.setData(c.map(k => ({ time: Math.floor(k.t / 1000), value: k.v, color: k.c >= k.o ? "rgba(52,211,153,.35)" : "rgba(251,113,133,.35)" })));
+  const closes = c.map(k => k.c);
+  for (const n of ["20", "50", "200"]) {
+    const e = ema(closes, Number(n));
+    emaSeries[n].setData(c.map((k, i) => ({ time: Math.floor(k.t / 1000), value: e[i] })));
+    emaSeries[n].applyOptions({ visible: emaOn });
+  }
+  chartApi.priceScale("right").applyOptions({ mode: logOn ? 1 : 0 });
+}
+
+(function chartTools() {
+  const bar = document.getElementById("tools");
+  if (!bar) return;
+  const mk = (label, title, fn) => {
+    const b = document.createElement("button");
+    b.className = "tb"; b.textContent = label; b.title = title;
+    b.onclick = () => fn(b); return b;
+  };
+  const sep = document.createElement("span"); sep.className = "sep";
+  const emaBtn = mk("EMA", "Exponential moving averages 20 / 50 / 200", b => {
+    emaOn = !emaOn; b.classList.toggle("on", emaOn);
+    for (const n of ["20", "50", "200"]) emaSeries[n] && emaSeries[n].applyOptions({ visible: emaOn });
+  });
+  const volBtn = mk("VOL", "Show / hide the volume bars", b => {
+    const on = !volSeries || !volSeries.options().visible;
+    if (volSeries) volSeries.applyOptions({ visible: on });
+    b.classList.toggle("on", !!on);
+  });
+  const logBtn = mk("LOG", "Logarithmic price scale", b => {
+    logOn = !logOn; b.classList.toggle("on", logOn);
+    chartApi.priceScale("right").applyOptions({ mode: logOn ? 1 : 0 });
+  });
+  const fsBtn = mk("⛶", "Fullscreen chart (F)", () => {
+    document.querySelector(".chart-card").classList.toggle("fs");
+    setTimeout(() => window.dispatchEvent(new Event("resize")), 60);
+  });
+  bar.appendChild(sep);
+  [emaBtn, volBtn, logBtn, fsBtn].forEach(b => bar.appendChild(b));
+})();
+
+(function insightStrip() {
+  const card = document.querySelector(".chart-card");
+  if (!card) return;
+  const d = document.createElement("div");
+  d.className = "insight"; d.id = "insight";
+  card.appendChild(d);
+})();
+
+/* ---------- star + share on the chart header ---------- */
+(function chartHeaderExtras() {
+  const head = document.querySelector(".chart-card .card-head");
+  if (!head) return;
+  const wrap = document.createElement("span");
+  wrap.className = "share";
+  const star = document.createElement("button");
+  star.className = "iconbtn"; star.id = "chartStar"; star.textContent = "★"; star.title = "Watch this coin";
+  star.onclick = () => { if (state.selectedSymbol) { toggleWatch(state.selectedSymbol); syncChartStar(); } };
+  const share = document.createElement("button");
+  share.className = "iconbtn"; share.textContent = "🔗"; share.title = "Copy a link to this coin";
+  share.onclick = async () => {
+    const url = `${location.origin}${location.pathname}?coin=${state.selectedSymbol || ""}`;
+    try { await navigator.clipboard.writeText(url); toast("Link copied"); } catch { window.prompt("Copy link:", url); }
+  };
+  wrap.appendChild(star); wrap.appendChild(share);
+  head.appendChild(wrap);
+})();
+function syncChartStar() {
+  const b = document.getElementById("chartStar");
+  if (b) b.classList.toggle("on", state.watch.has(state.selectedSymbol));
+}
+
+/* ---------- report: csv ---------- */
+(function reportCsv() {
+  const head = document.querySelector("#reportModal .modal-head > div");
+  if (!head) return;
+  const csvBtn = document.createElement("button");
+  csvBtn.className = "btn small"; csvBtn.textContent = "CSV";
+  csvBtn.onclick = () => {
+    if (!lastReport || !lastReport.out.length) { toast("Run the report first"); return; }
+    const lines = ["coin,signals,tp,open,tp_rate,net_pct,avg_pct"];
+    for (const c of lastReport.out) {
+      const st = reportStats(c.rows);
+      lines.push([c.symbol, st.signals, st.tp, st.open,
+        st.tpRate == null ? "" : st.tpRate.toFixed(1),
+        st.netPct.toFixed(2), st.avgPct == null ? "" : st.avgPct.toFixed(2)].join(","));
+    }
+    const url = URL.createObjectURL(new Blob([lines.join("\n")], { type: "text/csv" }));
+    const a = document.createElement("a");
+    a.href = url; a.download = `shahab-radar-report-${lastReport.range.from}-${lastReport.range.to}.csv`;
+    a.click(); setTimeout(() => URL.revokeObjectURL(url), 2000);
+    toast("Report exported");
+  };
+  head.appendChild(csvBtn);
+})();
+
+/* ---------- wrap the originals ---------- */
+const _drawChart = drawChart;
+drawChart = function (symbol, c) {
+  _drawChart(symbol, c);
+  try { enhDrawOverlays(c); renderInsight(symbol, c); syncChartStar(); } catch (e) {}
+};
+const _selectSymbol = selectSymbol;
+selectSymbol = async function (symbol, focusT) {
+  await _selectSymbol(symbol, focusT);
+  try {
+    history.replaceState(null, "", `${location.pathname}?coin=${encodeURIComponent(symbol)}`);
+    syncChartStar();
+  } catch (e) {}
+};
+const _refreshPrices = refreshPrices;
+refreshPrices = async function () {
+  await _refreshPrices();
+  try { checkAlerts(); $("updated").textContent = `Updated ${new Date().toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })}`; } catch (e) {}
+};
+const _runRounds = runRounds;
+runRounds = async function () {
+  const before = new Set(state.signals.map(x => x.id));
+  await _runRounds();
+  try {
+    const added = state.signals.filter(x => !before.has(x.id));
+    if (added.length) { chime(); notify(`${added.length} new daily signal${added.length > 1 ? "s" : ""}`, added.map(x => x.symbol).slice(0, 6).join(", ")); }
+  } catch (e) {}
+};
+
+/* ---------- keyboard ---------- */
+document.addEventListener("keydown", e => {
+  if (e.target && /input|select|textarea/i.test(e.target.tagName)) return;
+  if (e.key === "f" || e.key === "F") {
+    document.querySelector(".chart-card").classList.toggle("fs");
+    setTimeout(() => window.dispatchEvent(new Event("resize")), 60);
+  }
+  if (e.key === "Escape") {
+    const card = document.querySelector(".chart-card");
+    if (card.classList.contains("fs")) { card.classList.remove("fs"); setTimeout(() => window.dispatchEvent(new Event("resize")), 60); }
+  }
+});
+
+/* ---------- restore view prefs + deep link ---------- */
+try {
+  const p = JSON.parse(localStorage.getItem(PREF_KEY) || "null");
+  if (p && p.filter) {
+    state.filter = p.filter;
+    document.querySelectorAll("#sigFilter button").forEach(b => b.classList.toggle("on", b.dataset.f === p.filter));
+  }
+  if (p && p.sort) { state.sort = p.sort; $("sigSort").value = p.sort; }
+} catch {}
+const _renderSignals = renderSignals;
+renderSignals = function () { _renderSignals(); try { savePrefs(); } catch (e) {} };
+
+(function deepLink() {
+  const sym = new URLSearchParams(location.search).get("coin");
+  const start = () => {
+    if (sym && state.markets.some(m => m.symbol === sym.toUpperCase())) {
+      selectSymbol(sym.toUpperCase(), null);
+      $("chartSym").scrollIntoView({ behavior: "smooth", block: "center" });
+    } else renderSignals();
+  };
+  setTimeout(start, sym ? 900 : 400);
+})();
 
 window.__radar = { state, candles, historyCandles, coinSignals, toPair, analyze, settle, scanSlice, loadUniverse, saveCache, runRounds, refreshPrices, renderSignals, drawings };
 
