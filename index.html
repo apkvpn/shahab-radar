@@ -80,7 +80,6 @@
   .badge-new{font-size:9px;font-weight:800;border-radius:999px;padding:2px 7px;background:var(--lime);color:#111;white-space:nowrap}
   .sig-badge{font-size:9px;font-weight:800;border-radius:6px;padding:2px 6px;letter-spacing:.03em;white-space:nowrap}
   .sig-badge.tp{background:#dbeafe;color:#1d4ed8}
-  .sig-badge.sl{background:#fee2e2;color:#b91c1c}
   .sig-badge.open{background:#f1f5f9;color:#64748b}
   .sig-rows{display:grid;gap:3px;font-size:10.5px;color:#64748b}
   .sig-rows span{display:flex;align-items:baseline;gap:6px}
@@ -230,7 +229,6 @@
       <span><i style="border-color:#94a3b8"></i>Midline = TP target</span>
       <span><i style="border-color:#f87171"></i>Resistance</span>
       <span>Entry = signal close</span>
-      <span>Stop = 25% below entry</span>
     </div>
   </section>
 </main>
@@ -280,7 +278,7 @@
     </div>
 
     <div class="coin-list" id="coinList"></div>
-    <p class="report-note" id="reportNote">Pick coins (or All coins) and a year range, then Run report. Each coin uses its last 1000 daily candles.</p>
+    <p class="report-note" id="reportNote">Pick coins (or All coins) and a year range, then Run report. Daily candles are pulled back to 2009, as far as the exchange has data for each coin.</p>
     <div class="report-body" id="reportBody"></div>
     <pre class="report-text" id="reportText"></pre>
   </div>
@@ -293,12 +291,12 @@
    SIGNAL ENGINE — daily only
    Support band = smoothed close ± MULT·ATR, midline from the ALMA smoothing.
    A signal fires when the low pierces support and the candle closes back above
-   it. Entry = that close. TP = the grey midline. Stop = 25% below entry.
-   Outcome: TP when price touches the midline, STOP when price trades 25% below
-   entry first, OPEN while neither has happened.
+   it. Entry = that close. TP = the grey midline.
+   Outcome: TP once price touches the midline, OPEN until it does. There is no
+   stop loss — a trade only ever closes at the target.
    ============================================================================ */
 const W = 80, BANDWIDTH = 2, OFFSET = 0.85, SIGMA = 8, ATR_LEN = 100, MULT = 4;
-const STOP_PCT = 0.25, TREND_LOOKBACK = 5;
+const TREND_LOOKBACK = 5;
 
 const KERNEL = (() => {
   const w = []; let sum = 0;
@@ -355,7 +353,7 @@ function analyze(candles) {
     signals.push({
       i, t: c.t, entry: c.c, support: s, mid: mid[i], resistance: b.res[i], atr: atr[i],
       quality: reclaim && trendUp, live: !c.x,
-      tp: mid[i], sl: c.c * (1 - STOP_PCT),
+      tp: mid[i],
     });
   }
   return { ...b, signals };
@@ -363,21 +361,9 @@ function analyze(candles) {
 
 function settle(candles, s) {
   const lastClose = candles[candles.length - 1].c;
-  const tpPct = (s.tp / s.entry - 1) * 100, slPct = -STOP_PCT * 100;
+  const tpPct = (s.tp / s.entry - 1) * 100;
   for (let j = s.i + 1; j < candles.length; j++) {
-    const c = candles[j];
-    const hitTp = c.h >= s.tp, hitSl = c.l <= s.sl;
-    if (hitTp && hitSl) {
-      /* Both levels traded inside one candle and the candle's order is unknown.
-         The level nearer the open came first; on a tie the trade counts as TP,
-         because a trade already closed in profit never turns into a stop. */
-      const open = Number.isFinite(c.o) ? c.o : c.c;
-      if (Math.abs(open - s.tp) <= Math.abs(open - s.sl))
-        return { ...s, outcome: "TP", days: j - s.i, pnlPct: tpPct };
-      return { ...s, outcome: "STOP", days: j - s.i, pnlPct: slPct };
-    }
-    if (hitTp) return { ...s, outcome: "TP", days: j - s.i, pnlPct: tpPct };
-    if (hitSl) return { ...s, outcome: "STOP", days: j - s.i, pnlPct: slPct };
+    if (candles[j].h >= s.tp) return { ...s, outcome: "TP", days: j - s.i, pnlPct: tpPct };
   }
   return { ...s, outcome: "OPEN", days: null, pnlPct: (lastClose / s.entry - 1) * 100 };
 }
@@ -457,7 +443,7 @@ async function candles(pair, bars, priority = false) {
   return parse(rows, D1.ms).slice(-bars);
 }
 
-const KEY = "shahab-radar-d1-v6";
+const KEY = "shahab-radar-d1-v7";
 let snap = null;
 function loadCache() {
   try {
@@ -497,7 +483,6 @@ function setProgress(frac, text) {
 
 function outcomeChip(s) {
   if (s.outcome === "TP") return `<span class="sig-badge tp" title="Closed in profit at the midline">TP</span>`;
-  if (s.outcome === "STOP") return `<span class="sig-badge sl" title="Stopped 25% below entry">SL</span>`;
   return `<span class="sig-badge open" title="Trade still open">OPEN</span>`;
 }
 
@@ -529,7 +514,6 @@ function renderSignals() {
       <span class="sig-rows num">
         <span>Entry <b>${fmt(s.entry)}</b></span>
         <span><em style="color:#047857">TP</em> <b>${fmt(s.tp)}</b> <i>${pct(toTp)}</i></span>
-        <span><em style="color:#b91c1c">SL</em> <b>${fmt(s.sl)}</b> <i>−25%</i></span>
       </span>
       <span class="sig-foot num">
         <span>${stamp(s.candleTime)}</span>
@@ -604,7 +588,7 @@ async function scanSlice() {
             const out = settle(own, sig);
             m.sig = {
               id: `${m.symbol}-${sig.t}`, symbol: m.symbol, rank: m.rank,
-              entry: sig.entry, tp: sig.tp, sl: sig.sl, support: sig.support,
+              entry: sig.entry, tp: sig.tp, support: sig.support,
               candleTime: sig.t, quality: sig.quality, live: sig.live,
               outcome: out.outcome, days: out.days, pnlPct: out.pnlPct,
             };
@@ -715,12 +699,11 @@ function drawChart(symbol, c) {
     const t = Math.floor(s.t / 1000);
     const isFocus = focusSig && Math.floor(focusSig.t / 1000) === t;
     const hit = s.outcome === "TP" ? { position: "aboveBar", shape: "arrowDown", color: "#2563eb" }
-      : s.outcome === "STOP" ? { position: "belowBar", shape: "arrowDown", color: "#ef4444" }
       : { position: "belowBar", shape: "arrowUp", color: "#eab308" };
     return {
       time: t, position: hit.position, shape: hit.shape, color: hit.color,
       size: isFocus ? 2 : 1.2,
-      text: isFocus ? (s.outcome === "TP" ? "TP" : s.outcome === "STOP" ? "STOP" : "OPEN") : "",
+      text: isFocus ? (s.outcome === "TP" ? "TP" : "OPEN") : "",
     };
   }));
 
@@ -733,7 +716,6 @@ function drawChart(symbol, c) {
     };
     add(focusSig.tp, "#2563eb", `TP ${pct((focusSig.tp / focusSig.entry - 1) * 100)}`, LightweightCharts.LineStyle.Dotted);
     add(focusSig.entry, "#475569", "Entry", LightweightCharts.LineStyle.Solid);
-    add(focusSig.sl, "#ef4444", "SL −25%", LightweightCharts.LineStyle.Dashed);
   }
 
   const n = c.length, viewBars = 170;
@@ -759,9 +741,8 @@ function drawChart(symbol, c) {
   $("chartChange").className = `num ${chg == null ? "" : chg >= 0 ? "up" : "down"}`;
   $("chartChange").style.color = chg == null ? "" : chg >= 0 ? "#16a34a" : "#ef4444";
   if (focusSig) {
-    $("chartState").className = `chip ${focusSig.outcome === "TP" ? "blue" : focusSig.outcome === "STOP" ? "red" : "amber"}`;
-    $("chartState").textContent = focusSig.outcome === "TP" ? `TP hit in ${focusSig.days}d`
-      : focusSig.outcome === "STOP" ? `Stopped in ${focusSig.days}d` : "Signal open";
+    $("chartState").className = `chip ${focusSig.outcome === "TP" ? "blue" : "amber"}`;
+    $("chartState").textContent = focusSig.outcome === "TP" ? `TP hit in ${focusSig.days}d` : "Signal open";
   }
   $("chartRange").textContent = `D1 · ${c.length} candles · ${dayKey(c[0].t)} → ${dayKey(last.t)}`;
   renderDrawings();
@@ -1024,11 +1005,11 @@ function yearsInit() {
   const now = new Date().getUTCFullYear();
   const from = $("fromYear"), to = $("toYear");
   if (from.options.length) return;
-  for (let y = now - 3; y <= now; y++) {
+  for (let y = FIRST_YEAR; y <= now; y++) {
     from.add(new Option(String(y), String(y)));
     to.add(new Option(String(y), String(y)));
   }
-  from.value = String(now - 2);
+  from.value = String(Math.max(FIRST_YEAR, now - 2));
   to.value = String(now);
 }
 
@@ -1043,59 +1024,82 @@ function selectedCoins() {
   return Array.from(document.querySelectorAll("#coinList input:checked")).map(i => i.value);
 }
 
-async function coinSignals(symbol) {
-  if (reportCache.has(symbol)) return reportCache.get(symbol);
+/* Gate caps a candlestick request at 1000 points, so the full history is walked
+   backwards in ~2.5 year windows until the market's first candle. */
+const FIRST_YEAR = 2009;
+const HISTORY_START = Math.floor(Date.UTC(FIRST_YEAR, 0, 1) / 1000);
+const HISTORY_WINDOW = 900 * 86400;
+
+async function historyCandles(pair, sinceMs) {
+  const since = Math.max(HISTORY_START, Math.floor(sinceMs / 1000));
+  const found = new Map();
+  let end = Math.floor(Date.now() / 1000), empty = 0;
+  for (let guard = 0; guard < 12 && end > since; guard++) {
+    const start = Math.max(since, end - HISTORY_WINDOW);
+    let rows = [];
+    try {
+      rows = await api("/api/v4/spot/candlesticks", {
+        currency_pair: toPair(pair), interval: D1.iv, from: start, to: end,
+      });
+    } catch (e) { break; }
+    const parsed = parse(rows, D1.ms);
+    if (parsed.length) { empty = 0; for (const k of parsed) found.set(k.t, k); }
+    else if (++empty >= 2) break;   // no older candles for this market
+    end = start;
+  }
+  return [...found.values()].sort((a, b) => a.t - b.t);
+}
+
+async function coinSignals(symbol, fromMs) {
+  const key = `${symbol}|${fromMs}`;
+  if (reportCache.has(key)) return reportCache.get(key);
   const m = state.markets.find(x => x.symbol === symbol);
-  const own = await candles(m ? m.pair : symbol, 1000);
-  const res = analyze(own);
+  /* 400 extra days before the range so the bands are warmed up at its start */
+  const own = await historyCandles(m ? m.pair : symbol, fromMs - 400 * 864e5);
+  const res = own.length > 2 * W + 10 ? analyze(own) : { signals: [] };
   const rows = res.signals.map(s => settle(own, s));
-  reportCache.set(symbol, rows);
+  reportCache.set(key, rows);
   return rows;
 }
 
 function reportStats(rows) {
-  const tp = rows.filter(r => r.outcome === "TP");
-  const sl = rows.filter(r => r.outcome === "STOP");
-  const open = rows.filter(r => r.outcome === "OPEN");
-  const closed = tp.length + sl.length;
-  const netPct = [...tp, ...sl].reduce((a, r) => a + r.pnlPct, 0);
+  const hits = rows.filter(r => r.outcome === "TP");
+  const signals = rows.length, tp = hits.length;
+  const netPct = hits.reduce((a, r) => a + r.pnlPct, 0);
   return {
-    signals: rows.length, tp: tp.length, sl: sl.length, open: open.length, closed,
-    tpRate: closed ? (tp.length / closed) * 100 : null,
-    netPct, avgPct: closed ? netPct / closed : null,
+    signals, tp, open: signals - tp,
+    tpRate: signals ? (tp / signals) * 100 : null,
+    netPct, avgPct: tp ? netPct / tp : null,
   };
 }
 
 function reportTable(coins, range) {
   const head = `<thead><tr>
-    <th>Coin</th><th>Signals</th><th>TP</th><th>Stop</th><th>Open</th>
-    <th>TP rate</th><th>Net %</th><th>Avg % / trade</th></tr></thead>`;
-  let total = { signals: 0, tp: 0, sl: 0, open: 0, netPct: 0, closed: 0 };
+    <th>Coin</th><th>Signals</th><th>TP</th><th>Open</th>
+    <th>TP rate</th><th>Net %</th><th>Avg % / TP</th></tr></thead>`;
+  let total = { signals: 0, tp: 0, open: 0, netPct: 0 };
   const body = coins.map(c => {
     const st = reportStats(c.rows);
-    total.signals += st.signals; total.tp += st.tp; total.sl += st.sl; total.open += st.open;
-    total.netPct += st.netPct; total.closed += st.closed;
-    const netClass = st.netPct >= 0 ? "pos" : "neg";
+    total.signals += st.signals; total.tp += st.tp; total.open += st.open; total.netPct += st.netPct;
     return `<tr>
       <td><b>${c.symbol}</b></td>
       <td>${st.signals}</td>
       <td>${st.tp}</td>
-      <td>${st.sl}</td>
       <td>${st.open}</td>
       <td>${st.tpRate == null ? "—" : st.tpRate.toFixed(1) + "%"}</td>
-      <td class="${netClass}">${pct(st.netPct)}</td>
+      <td class="${st.netPct >= 0 ? "pos" : "neg"}">${pct(st.netPct)}</td>
       <td>${st.avgPct == null ? "—" : pct(st.avgPct)}</td>
     </tr>`;
   }).join("");
-  const tpRate = total.closed ? (total.tp / total.closed) * 100 : null;
+  const tpRate = total.signals ? (total.tp / total.signals) * 100 : null;
   const foot = `<tfoot><tr>
       <td>All selected (${coins.length})</td>
-      <td>${total.signals}</td><td>${total.tp}</td><td>${total.sl}</td><td>${total.open}</td>
+      <td>${total.signals}</td><td>${total.tp}</td><td>${total.open}</td>
       <td>${tpRate == null ? "—" : tpRate.toFixed(1) + "%"}</td>
       <td class="${total.netPct >= 0 ? "pos" : "neg"}">${pct(total.netPct)}</td>
-      <td>${total.closed ? pct(total.netPct / total.closed) : "—"}</td>
+      <td>${total.tp ? pct(total.netPct / total.tp) : "—"}</td>
     </tr></tfoot>`;
-  return `<p class="report-note">Daily signals · ${range.from} → ${range.to} · net % sums every closed trade with equal weight (TP = move to the midline, stop = −25%).</p>
+  return `<p class="report-note">Daily signals · ${range.from} → ${range.to} · TP = the move to the grey midline · net % sums every TP trade with equal weight. No stop loss.</p>
     <table>${head}<tbody>${body}</tbody>${foot}</table>`;
 }
 
@@ -1107,20 +1111,21 @@ function reportText(coins, range, total) {
   lines.push(`Range: ${range.from} → ${range.to}`);
   lines.push(`Coins: ${coins.length}`);
   lines.push("");
-  lines.push(pad("COIN", 12) + padL("SIGNALS", 9) + padL("TP", 6) + padL("STOP", 6) + padL("OPEN", 6) + padL("TP%", 8) + padL("NET%", 10) + padL("AVG%", 9));
-  lines.push("-".repeat(66));
+  lines.push(pad("COIN", 12) + padL("SIGNALS", 9) + padL("TP", 6) + padL("OPEN", 6) + padL("TP%", 8) + padL("NET%", 10) + padL("AVG%", 9));
+  lines.push("-".repeat(60));
   for (const c of coins) {
     const st = reportStats(c.rows);
     lines.push(
-      pad(c.symbol, 12) + padL(st.signals, 9) + padL(st.tp, 6) + padL(st.sl, 6) + padL(st.open, 6) +
+      pad(c.symbol, 12) + padL(st.signals, 9) + padL(st.tp, 6) + padL(st.open, 6) +
       padL(st.tpRate == null ? "-" : st.tpRate.toFixed(1), 8) +
       padL(st.netPct.toFixed(2), 10) + padL(st.avgPct == null ? "-" : st.avgPct.toFixed(2), 9)
     );
   }
-  lines.push("-".repeat(66));
-  lines.push(pad("TOTAL", 12) + padL(total.signals, 9) + padL(total.tp, 6) + padL(total.sl, 6) + padL(total.open, 6) +
+  lines.push("-".repeat(60));
+  lines.push(pad("TOTAL", 12) + padL(total.signals, 9) + padL(total.tp, 6) + padL(total.open, 6) +
     padL(total.tpRate == null ? "-" : total.tpRate.toFixed(1), 8) +
     padL(total.netPct.toFixed(2), 10) + padL(total.avgPct == null ? "-" : total.avgPct.toFixed(2), 9));
+  lines.push("Exit rule: TP only (the grey midline). No stop loss.");
   lines.push("");
   lines.push(`Data source: Gate.io daily candles · generated ${new Date().toISOString().slice(0, 10)}`);
   return lines.join("\n");
@@ -1147,7 +1152,7 @@ async function runReport() {
       const sym = queue.shift();
       if (!sym) return;
       try {
-        const rows = (await coinSignals(sym)).filter(r => r.t / 1000 >= fromMs && r.t / 1000 < toMs);
+        const rows = (await coinSignals(sym, fromMs)).filter(r => r.t / 1000 >= fromMs && r.t / 1000 < toMs);
         out.push({ symbol: sym, rows });
       } catch (e) {
         out.push({ symbol: sym, rows: [] });
@@ -1162,12 +1167,11 @@ async function runReport() {
   const range = { from: `${new Date(fromMs * 1000).getUTCFullYear()}`, to: `${new Date((toMs - 86400) * 1000).getUTCFullYear()}` };
   const total = out.reduce((acc, c) => {
     const st = reportStats(c.rows);
-    acc.signals += st.signals; acc.tp += st.tp; acc.sl += st.sl; acc.open += st.open;
-    acc.netPct += st.netPct; acc.closed += st.closed;
+    acc.signals += st.signals; acc.tp += st.tp; acc.open += st.open; acc.netPct += st.netPct;
     return acc;
-  }, { signals: 0, tp: 0, sl: 0, open: 0, netPct: 0, closed: 0 });
-  total.tpRate = total.closed ? (total.tp / total.closed) * 100 : null;
-  total.avgPct = total.closed ? total.netPct / total.closed : null;
+  }, { signals: 0, tp: 0, open: 0, netPct: 0 });
+  total.tpRate = total.signals ? (total.tp / total.signals) * 100 : null;
+  total.avgPct = total.tp ? total.netPct / total.tp : null;
 
   body.innerHTML = reportTable(out, range);
   $("reportText").textContent = reportText(out, range, total);
@@ -1240,7 +1244,7 @@ $("copyReport").onclick = async () => {
   catch { window.prompt("Copy the report:", txt); }
 };
 
-window.__radar = { state, candles, toPair, analyze, settle, scanSlice, loadUniverse, drawings };
+window.__radar = { state, candles, historyCandles, coinSignals, toPair, analyze, settle, scanSlice, loadUniverse, drawings };
 
 (async function boot() {
   initChart();
