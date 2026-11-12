@@ -22,6 +22,7 @@
   .num{font-variant-numeric:tabular-nums}
   button{font-family:inherit;cursor:pointer}
 
+  /* ---------- header ---------- */
   header.top{position:sticky;top:0;z-index:30;background:rgba(255,255,255,.96);backdrop-filter:blur(10px);
     border-bottom:1px solid var(--line)}
   .top-row{display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:10px 14px}
@@ -41,12 +42,14 @@
   .btn.primary:hover{background:#bef264}
   .btn.small{padding:4px 9px;font-size:11.5px;border-radius:8px}
 
+  /* ---------- scan line ---------- */
   .scanline{display:flex;align-items:center;gap:10px;padding:0 14px 9px}
   .scanline .k{font-size:10.5px;font-weight:800;color:#475569;white-space:nowrap}
   .scanline .bar{flex:1;height:5px;border-radius:999px;background:#eef1f5;overflow:hidden;min-width:70px}
   .scanline .bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,#a3e635,#65a30d);transition:width .3s}
   .scanline .t{font-size:10.5px;color:#475569;white-space:nowrap;font-weight:700}
 
+  /* ---------- cards ---------- */
   main{max-width:1180px;margin:0 auto;padding:12px;display:grid;gap:12px}
   .card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden}
   .card h2{margin:0;font-size:13px;font-weight:800}
@@ -57,8 +60,10 @@
   .chip.green{background:#ecfdf5;color:#047857}
   .chip.red{background:#fef2f2;color:#b91c1c}
   .chip.amber{background:#fffbeb;color:#b45309}
+  .chip.blue{background:#eff6ff;color:#1d4ed8}
   .muted{color:var(--muted);font-size:11px}
 
+  /* ---------- signal strip ---------- */
   .strip{display:flex;gap:10px;overflow-x:auto;padding:12px;direction:rtl;scroll-snap-type:x proximity;
     scrollbar-width:thin}
   .strip::-webkit-scrollbar{height:8px}
@@ -73,10 +78,10 @@
   .tag{font-size:9px;font-weight:800;border-radius:5px;padding:2px 6px;background:#f1f5f9;color:#64748b;white-space:nowrap}
   .tag.d1{background:#eef2ff;color:#4338ca}
   .badge-new{font-size:9px;font-weight:800;border-radius:999px;padding:2px 7px;background:var(--lime);color:#111;white-space:nowrap}
-  .sig-status{font-size:10.5px;font-weight:800;border-radius:8px;padding:4px 8px;text-align:center}
-  .sig-status.tp{background:#ecfdf5;color:#047857}
-  .sig-status.sl{background:#fef2f2;color:#b91c1c}
-  .sig-status.open{background:#f8fafc;color:#475569}
+  .sig-badge{font-size:9px;font-weight:800;border-radius:6px;padding:2px 6px;letter-spacing:.03em;white-space:nowrap}
+  .sig-badge.tp{background:#dbeafe;color:#1d4ed8}
+  .sig-badge.sl{background:#fee2e2;color:#b91c1c}
+  .sig-badge.open{background:#f1f5f9;color:#64748b}
   .sig-rows{display:grid;gap:3px;font-size:10.5px;color:#64748b}
   .sig-rows span{display:flex;align-items:baseline;gap:6px}
   .sig-rows span > b{margin-left:auto}
@@ -86,6 +91,7 @@
   .sig-foot{font-size:10px;color:#94a3b8;border-top:1px solid #f1f3f6;padding-top:6px;display:flex;
     justify-content:space-between;gap:8px}
 
+  /* ---------- chart ---------- */
   .chart-card .card-head{gap:10px}
   .sym-title{font-size:18px;font-weight:800}
   .toolbar{display:flex;flex-wrap:wrap;gap:4px;align-items:center;padding:7px 10px;border-bottom:1px solid var(--line);background:#fbfcfd}
@@ -102,6 +108,7 @@
   .legend{display:flex;flex-wrap:wrap;gap:12px;padding:9px 14px;border-top:1px solid var(--line);font-size:10.5px;color:#475569;align-items:center}
   .legend i{display:inline-block;width:14px;height:0;border-top:2px solid;margin-right:5px;vertical-align:middle}
 
+  /* ---------- modal / report ---------- */
   .modal{position:fixed;inset:0;z-index:60;display:grid;place-items:center;padding:16px;background:rgba(15,23,42,.45);overflow:auto}
   .modal[hidden]{display:none}
   .modal-box{background:#fff;border-radius:16px;width:100%;max-width:920px;max-height:90vh;overflow:auto;
@@ -236,6 +243,7 @@
   <span id="updated">—</span>
 </footer>
 
+<!-- password gate -->
 <div class="modal" id="authModal" hidden>
   <div class="modal-box small">
     <h3>Report access</h3>
@@ -249,6 +257,7 @@
   </div>
 </div>
 
+<!-- report -->
 <div class="modal" id="reportModal" hidden>
   <div class="modal-box">
     <div class="modal-head">
@@ -285,6 +294,8 @@
    Support band = smoothed close ± MULT·ATR, midline from the ALMA smoothing.
    A signal fires when the low pierces support and the candle closes back above
    it. Entry = that close. TP = the grey midline. Stop = 25% below entry.
+   Outcome: TP when price touches the midline, STOP when price trades 25% below
+   entry first, OPEN while neither has happened.
    ============================================================================ */
 const W = 80, BANDWIDTH = 2, OFFSET = 0.85, SIGMA = 8, ATR_LEN = 100, MULT = 4;
 const STOP_PCT = 0.25, TREND_LOOKBACK = 5;
@@ -338,7 +349,7 @@ function analyze(candles) {
     const s = sup[i], ps = sup[i - 1];
     if (!Number.isFinite(s) || !Number.isFinite(ps) || !Number.isFinite(atr[i])) continue;
     if (!(c.l < s && p.l >= ps)) continue;
-    if (!(mid[i] > c.c)) continue;
+    if (!(mid[i] > c.c)) continue;                    // TP must sit above the entry
     const reclaim = c.c > s;
     const trendUp = Number.isFinite(mid[i - TREND_LOOKBACK]) && mid[i] > mid[i - TREND_LOOKBACK];
     signals.push({
@@ -352,10 +363,21 @@ function analyze(candles) {
 
 function settle(candles, s) {
   const lastClose = candles[candles.length - 1].c;
+  const tpPct = (s.tp / s.entry - 1) * 100, slPct = -STOP_PCT * 100;
   for (let j = s.i + 1; j < candles.length; j++) {
     const c = candles[j];
-    if (c.l <= s.sl) return { ...s, outcome: "STOP", days: j - s.i, pnlPct: -STOP_PCT * 100 };
-    if (c.h >= s.tp) return { ...s, outcome: "TP", days: j - s.i, pnlPct: (s.tp / s.entry - 1) * 100 };
+    const hitTp = c.h >= s.tp, hitSl = c.l <= s.sl;
+    if (hitTp && hitSl) {
+      /* Both levels traded inside one candle and the candle's order is unknown.
+         The level nearer the open came first; on a tie the trade counts as TP,
+         because a trade already closed in profit never turns into a stop. */
+      const open = Number.isFinite(c.o) ? c.o : c.c;
+      if (Math.abs(open - s.tp) <= Math.abs(open - s.sl))
+        return { ...s, outcome: "TP", days: j - s.i, pnlPct: tpPct };
+      return { ...s, outcome: "STOP", days: j - s.i, pnlPct: slPct };
+    }
+    if (hitTp) return { ...s, outcome: "TP", days: j - s.i, pnlPct: tpPct };
+    if (hitSl) return { ...s, outcome: "STOP", days: j - s.i, pnlPct: slPct };
   }
   return { ...s, outcome: "OPEN", days: null, pnlPct: (lastClose / s.entry - 1) * 100 };
 }
@@ -448,6 +470,9 @@ function saveCache() {
   try { if (snap) localStorage.setItem(KEY, JSON.stringify(snap)); } catch {}
 }
 
+/* ============================================================================
+   STATE
+   ============================================================================ */
 const state = {
   markets: [], signals: [], at: 0, cursor: 0, round: 0, gen: 0, scannedRound: 0,
   busy: false, total: 0, scanned: 0, strict: true, charts: new Map(), focusT: null, drawSeq: 0, selectedSymbol: null,
@@ -458,6 +483,7 @@ const fmt = v => v == null || !Number.isFinite(v) ? "—"
   : v.toLocaleString("en-US", { maximumSignificantDigits: 6 });
 const pct = v => v == null || !Number.isFinite(v) ? "—" : `${v > 0 ? "+" : ""}${v.toFixed(2)}%`;
 const dayKey = t => new Date(t).toLocaleDateString("en-US", { month: "short", day: "numeric" });
+const fullDay = t => new Date(t).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" });
 const stamp = t => `${dayKey(t)} ${new Date(t).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", hour12: false })}`;
 
 function paintStatus(text, tone) {
@@ -470,9 +496,9 @@ function setProgress(frac, text) {
 }
 
 function outcomeChip(s) {
-  if (s.outcome === "TP") return `<span class="sig-status tp">TP hit${s.days ? ` · ${s.days}d` : ""}</span>`;
-  if (s.outcome === "STOP") return `<span class="sig-status sl">Stopped${s.days ? ` · ${s.days}d` : ""}</span>`;
-  return `<span class="sig-status open">Open</span>`;
+  if (s.outcome === "TP") return `<span class="sig-badge tp" title="Closed in profit at the midline">TP</span>`;
+  if (s.outcome === "STOP") return `<span class="sig-badge sl" title="Stopped 25% below entry">SL</span>`;
+  return `<span class="sig-badge open" title="Trade still open">OPEN</span>`;
 }
 
 function renderSignals() {
@@ -496,10 +522,10 @@ function renderSignals() {
         <span style="display:flex;align-items:center;gap:6px">
           <span class="sym num">${s.symbol}</span>
           <span class="tag d1">D1</span>
+          ${outcomeChip(s)}
         </span>
         ${fresh ? `<span class="badge-new">New Signal</span>` : ""}
       </span>
-      ${outcomeChip(s)}
       <span class="sig-rows num">
         <span>Entry <b>${fmt(s.entry)}</b></span>
         <span><em style="color:#047857">TP</em> <b>${fmt(s.tp)}</b> <i>${pct(toTp)}</i></span>
@@ -519,6 +545,9 @@ function renderSignals() {
   box.appendChild(frag);
 }
 
+/* ============================================================================
+   SCAN
+   ============================================================================ */
 async function loadUniverse(force) {
   const cached = !force && loadCache();
   if (cached) {
@@ -616,6 +645,9 @@ async function runRounds() {
   }
 }
 
+/* ============================================================================
+   CHART
+   ============================================================================ */
 let chartApi = null, candleSeries = null, bandS = null, markersApi = null, priceLines = [];
 
 function initChart() {
@@ -682,7 +714,7 @@ function drawChart(symbol, c) {
   markersApi.setMarkers(settled.map(s => {
     const t = Math.floor(s.t / 1000);
     const isFocus = focusSig && Math.floor(focusSig.t / 1000) === t;
-    const hit = s.outcome === "TP" ? { position: "aboveBar", shape: "arrowDown", color: "#16a34a" }
+    const hit = s.outcome === "TP" ? { position: "aboveBar", shape: "arrowDown", color: "#2563eb" }
       : s.outcome === "STOP" ? { position: "belowBar", shape: "arrowDown", color: "#ef4444" }
       : { position: "belowBar", shape: "arrowUp", color: "#eab308" };
     return {
@@ -699,7 +731,7 @@ function drawChart(symbol, c) {
       const pl = candleSeries.createPriceLine({ price, color, lineWidth: 1, lineStyle: style, axisLabelVisible: true, title });
       priceLines.push(pl);
     };
-    add(focusSig.tp, "#16a34a", `TP ${pct((focusSig.tp / focusSig.entry - 1) * 100)}`, LightweightCharts.LineStyle.Dotted);
+    add(focusSig.tp, "#2563eb", `TP ${pct((focusSig.tp / focusSig.entry - 1) * 100)}`, LightweightCharts.LineStyle.Dotted);
     add(focusSig.entry, "#475569", "Entry", LightweightCharts.LineStyle.Solid);
     add(focusSig.sl, "#ef4444", "SL −25%", LightweightCharts.LineStyle.Dashed);
   }
@@ -727,7 +759,7 @@ function drawChart(symbol, c) {
   $("chartChange").className = `num ${chg == null ? "" : chg >= 0 ? "up" : "down"}`;
   $("chartChange").style.color = chg == null ? "" : chg >= 0 ? "#16a34a" : "#ef4444";
   if (focusSig) {
-    $("chartState").className = `chip ${focusSig.outcome === "TP" ? "green" : focusSig.outcome === "STOP" ? "red" : "amber"}`;
+    $("chartState").className = `chip ${focusSig.outcome === "TP" ? "blue" : focusSig.outcome === "STOP" ? "red" : "amber"}`;
     $("chartState").textContent = focusSig.outcome === "TP" ? `TP hit in ${focusSig.days}d`
       : focusSig.outcome === "STOP" ? `Stopped in ${focusSig.days}d` : "Signal open";
   }
@@ -735,7 +767,9 @@ function drawChart(symbol, c) {
   renderDrawings();
 }
 
-/* ===== DRAWING TOOLS ===== */
+/* ============================================================================
+   DRAWING TOOLS
+   ============================================================================ */
 const DRAW_KEY = "shahab-radar-drawings-v1";
 const DRAW_COLOR = "#0284c7", DRAW_LIME = "#65a30d", FIB_COLOR = "#7c3aed";
 let drawings = {};
@@ -900,10 +934,12 @@ function drawShape(ctx, s, W, H) {
     ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
     ctx.setLineDash([]);
     const label = `${up ? "+" : ""}${dPct.toFixed(2)}%  ·  ${fmt(Math.abs(dP))}`;
+    ctx.fillStyle = up ? DRAW_LIME : "#dc2626";
     tag(ctx, (x1 + x2) / 2, (y1 + y2) / 2, ` ${label} `, up ? DRAW_LIME : "#dc2626", "center");
     return;
   }
 
+  /* trend + ray */
   ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2);
   if (s.type === "ray") {
     const dx = x2 - x1;
@@ -946,7 +982,9 @@ function renderDrawings() {
   }
 }
 
-/* ===== REPORT (password 1213) ===== */
+/* ============================================================================
+   REPORT — password 1213
+   ============================================================================ */
 const REPORT_PASSWORD = "1213";
 const reportCache = new Map();
 let lastReport = null;
@@ -958,8 +996,13 @@ function openAuth() {
 }
 function closeAuth() { $("authModal").hidden = true; }
 function unlock() {
-  if ($("pwInput").value.trim() === REPORT_PASSWORD) { closeAuth(); openReport(); }
-  else { $("pwErr").hidden = false; $("pwInput").value = ""; }
+  if ($("pwInput").value.trim() === REPORT_PASSWORD) {
+    closeAuth();
+    openReport();
+  } else {
+    $("pwErr").hidden = false;
+    $("pwInput").value = "";
+  }
 }
 
 function buildReportCoins() {
@@ -989,7 +1032,11 @@ function yearsInit() {
   to.value = String(now);
 }
 
-function openReport() { yearsInit(); buildReportCoins(); $("reportModal").hidden = false; }
+function openReport() {
+  yearsInit();
+  buildReportCoins();
+  $("reportModal").hidden = false;
+}
 function closeReport() { $("reportModal").hidden = true; }
 
 function selectedCoins() {
@@ -1023,11 +1070,12 @@ function reportTable(coins, range) {
   const head = `<thead><tr>
     <th>Coin</th><th>Signals</th><th>TP</th><th>Stop</th><th>Open</th>
     <th>TP rate</th><th>Net %</th><th>Avg % / trade</th></tr></thead>`;
-  const total = { signals: 0, tp: 0, sl: 0, open: 0, netPct: 0, closed: 0 };
+  let total = { signals: 0, tp: 0, sl: 0, open: 0, netPct: 0, closed: 0 };
   const body = coins.map(c => {
     const st = reportStats(c.rows);
     total.signals += st.signals; total.tp += st.tp; total.sl += st.sl; total.open += st.open;
     total.netPct += st.netPct; total.closed += st.closed;
+    const netClass = st.netPct >= 0 ? "pos" : "neg";
     return `<tr>
       <td><b>${c.symbol}</b></td>
       <td>${st.signals}</td>
@@ -1035,7 +1083,7 @@ function reportTable(coins, range) {
       <td>${st.sl}</td>
       <td>${st.open}</td>
       <td>${st.tpRate == null ? "—" : st.tpRate.toFixed(1) + "%"}</td>
-      <td class="${st.netPct >= 0 ? "pos" : "neg"}">${pct(st.netPct)}</td>
+      <td class="${netClass}">${pct(st.netPct)}</td>
       <td>${st.avgPct == null ? "—" : pct(st.avgPct)}</td>
     </tr>`;
   }).join("");
@@ -1101,7 +1149,9 @@ async function runReport() {
       try {
         const rows = (await coinSignals(sym)).filter(r => r.t / 1000 >= fromMs && r.t / 1000 < toMs);
         out.push({ symbol: sym, rows });
-      } catch (e) { out.push({ symbol: sym, rows: [] }); }
+      } catch (e) {
+        out.push({ symbol: sym, rows: [] });
+      }
       done++;
       $("reportProgress").textContent = `${done} / ${coinsSel.length}`;
     }
@@ -1126,6 +1176,9 @@ async function runReport() {
   lastReport = { out, range, total };
 }
 
+/* ============================================================================
+   WIRING
+   ============================================================================ */
 function renderAll() {
   renderSignals();
   $("updated").textContent = state.total
@@ -1167,8 +1220,12 @@ $("pwCancel").onclick = closeAuth;
 $("pwInput").addEventListener("keydown", e => { if (e.key === "Enter") unlock(); });
 $("reportClose").onclick = closeReport;
 $("runReport").onclick = runReport;
-$("pickAll").onclick = () => { document.querySelectorAll("#coinList input").forEach(i => { i.checked = true; }); };
-$("pickNone").onclick = () => { document.querySelectorAll("#coinList input").forEach(i => { i.checked = false; }); };
+$("pickAll").onclick = () => {
+  document.querySelectorAll("#coinList input").forEach(i => { i.checked = true; });
+};
+$("pickNone").onclick = () => {
+  document.querySelectorAll("#coinList input").forEach(i => { i.checked = false; });
+};
 $("coinSearch").oninput = () => {
   const q = $("coinSearch").value.trim().toUpperCase();
   document.querySelectorAll("#coinList label").forEach(l => {
