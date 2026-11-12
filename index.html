@@ -123,6 +123,7 @@
   .tag{font-size:9px;font-weight:800;border-radius:6px;padding:2.5px 6px;background:rgba(255,255,255,.07);
     color:var(--muted);white-space:nowrap;border:1px solid var(--line)}
   .tag.d1{background:rgba(96,165,250,.12);border-color:rgba(96,165,250,.28);color:#93c5fd}
+  .tag.rank{background:rgba(200,247,81,.10);border-color:rgba(200,247,81,.26);color:#d9ff8f;font-variant-numeric:tabular-nums}
   .badge-new{font-size:9px;font-weight:900;border-radius:999px;padding:2.5px 8px;color:#0a0f02;
     background:linear-gradient(135deg,#e2ff7a,#a3e635);box-shadow:0 4px 12px -6px rgba(163,230,53,.9);white-space:nowrap}
   .sig-badge{font-size:9px;font-weight:900;border-radius:6px;padding:2.5px 7px;letter-spacing:.06em;white-space:nowrap;
@@ -460,7 +461,7 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
 const HOST = "https://api.gateio.ws";
 const UNIVERSE = 1000;
 const BATCH = 110;
-const TTL = 20 * 60_000, CONC = 6;
+const CONC = 6;
 const D1 = { k: "1d", iv: "1d", ms: 864e5, bars: 500 };
 const CHART_BARS = 900;
 const STABLE = new Set("usdt usdc dai tusd busd fdusd usde usds usdd pyusd usdg rlusd lusd susd usdp eurc eurt frax gho usdb usdx ousd mim usd1".split(" "));
@@ -530,17 +531,27 @@ async function candles(pair, bars, priority = false) {
   return parse(rows, D1.ms).slice(-bars);
 }
 
-const KEY = "shahab-radar-d1-v7";
-let snap = null;
+const KEY = "shahab-radar-d1-v8", CACHE_VERSION = 8;
+
+/* The scan lives in localStorage for good: the markets list, every signal that
+   was already found, the position the scan stopped at and whether a full pass
+   finished. Coming back to the page resumes from that point instead of starting
+   over, and a rescan only ever adds or refreshes signals — never wipes them. */
 function loadCache() {
   try {
     const raw = localStorage.getItem(KEY); if (!raw) return null;
     const d = JSON.parse(raw);
-    return d && d.at && Date.now() - d.at < TTL && d.markets?.length ? d : null;
+    return d && d.v === CACHE_VERSION && Array.isArray(d.markets) && d.markets.length ? d : null;
   } catch { return null; }
 }
 function saveCache() {
-  try { if (snap) localStorage.setItem(KEY, JSON.stringify(snap)); } catch {}
+  try {
+    localStorage.setItem(KEY, JSON.stringify({
+      v: CACHE_VERSION, at: Date.now(), done: !!state.done, strict: state.strict,
+      cursor: state.cursor, round: state.round, scannedRound: state.scannedRound, scanned: state.scanned,
+      markets: state.markets, signals: state.signals,
+    }));
+  } catch {}
 }
 
 /* ============================================================================
@@ -549,7 +560,7 @@ function saveCache() {
 const state = {
   markets: [], signals: [], at: 0, cursor: 0, round: 0, gen: 0, scannedRound: 0,
   busy: false, total: 0, scanned: 0, strict: true, charts: new Map(), focusT: null, drawSeq: 0, selectedSymbol: null,
-  reporting: false,
+  reporting: false, done: false,
 };
 const $ = id => document.getElementById(id);
 const fmt = v => v == null || !Number.isFinite(v) ? "—"
@@ -595,6 +606,7 @@ function renderSignals() {
         <span style="display:flex;align-items:center;gap:6px">
           <span class="sym num">${s.symbol}</span>
           <span class="tag d1">D1</span>
+          ${s.rank ? `<span class="tag rank" title="Market rank by 24h volume">#${s.rank}</span>` : ""}
           ${outcomeChip(s)}
         </span>
         ${fresh ? `<span class="badge-new">New Signal</span>` : ""}
@@ -625,7 +637,10 @@ async function loadUniverse(force) {
   if (cached) {
     state.markets = cached.markets; state.signals = cached.signals || [];
     state.at = cached.at; state.cursor = cached.cursor || 0; state.round = cached.round || 0;
+    state.done = !!cached.done; state.strict = cached.strict !== false;
+    state.scannedRound = cached.scannedRound || 0;
     state.total = cached.markets.length; state.scanned = cached.markets.filter(m => m.scannedAt).length;
+    $("mode").textContent = `Quality: ${state.strict ? "High" : "All"}`;
     renderAll();
     paintStatus("Live", "live");
     if (Date.now() - cached.at < 60_000) return;
@@ -668,11 +683,10 @@ async function scanSlice() {
       if (!m) return;
       try {
         const own = await candles(m.pair, D1.bars);
-        m.sig = null;
         if (own.length >= 2 * W + 10) {
           const a = analyze(own);
           const sig = a.signals[a.signals.length - 1];
-          if (sig && (!state.strict || sig.quality)) {
+          if (sig && (!state.strict || sig.quality) && (!m.sig || sig.t >= m.sig.candleTime)) {
             const out = settle(own, sig);
             m.sig = {
               id: `${m.symbol}-${sig.t}`, symbol: m.symbol, rank: m.rank,
@@ -697,25 +711,23 @@ async function scanSlice() {
   renderAll();
   paintStatus("Live", "live");
   state.at = Date.now();
-  snap = { at: state.at, cursor: state.cursor, round: state.round, markets: state.markets, signals: state.signals };
   saveCache();
 }
 
 async function runRounds() {
   const gen = ++state.gen;
-  for (;;) {
-    const r0 = state.round;
-    while (state.round === r0) {
-      if (state.gen !== gen || !state.markets.length) return;
-      if (state.reporting) { await sleep(400); continue; }
-      if (state.busy) { await sleep(300); continue; }
-      await scanSlice();
-    }
-    if (state.gen !== gen) return;
-    paintStatus("Paused 1 min", "warn");
-    setProgress(1, `Round ${state.round} finished · restarting in 1 minute`);
-    await sleep(60_000);
+  const startRound = state.round;
+  while (state.round === startRound) {
+    if (state.gen !== gen || !state.markets.length) return;
+    if (state.reporting) { await sleep(400); continue; }
+    if (state.busy) { await sleep(300); continue; }
+    await scanSlice();
   }
+  if (state.gen !== gen) return;
+  state.done = true;
+  saveCache();
+  paintStatus("Saved", "live");
+  setProgress(1, `All ${state.total} markets checked · ${state.signals.length} signals saved`);
 }
 
 /* ============================================================================
@@ -1185,7 +1197,7 @@ function reportTable(coins, range) {
       <td>All selected (${coins.length})</td>
       <td>${total.signals}</td><td>${total.tp}</td><td>${total.open}</td>
       <td>${tpRate == null ? "—" : tpRate.toFixed(1) + "%"}</td>
-      <td class="${total.netPct >= 0 ? "pos" : "neg"}">${pct(total.netPct)}</td>
+      <td class="${total.netPct >= 0 ? "pos" : "neg"}">${total.netPct >= 0 ? "+" : ""}${total.netPct.toFixed(2)}%</td>
       <td>${total.tp ? pct(total.netPct / total.tp) : "—"}</td>
     </tr></tfoot>`;
   return `<p class="report-note">Daily signals · ${range.from} → ${range.to} · TP = the move to the grey midline · net % sums every TP trade with equal weight. No stop loss.</p>
@@ -1293,10 +1305,10 @@ function tickCountdown() {
 }
 
 $("refresh").onclick = async () => {
-  localStorage.removeItem(KEY);
-  state.charts.clear(); state.cursor = 0; state.round = 0; state.scanned = 0;
-  setProgress(0, "Loading markets…");
-  await loadUniverse(true);
+  state.done = false; state.cursor = 0; state.round = 0; state.scanned = 0; state.scannedRound = 0;
+  state.charts.clear();
+  setProgress(0, "Refreshing markets…");
+  try { await loadUniverse(true); } catch (e) {}
   runRounds();
 };
 $("mode").onclick = async () => {
@@ -1305,8 +1317,9 @@ $("mode").onclick = async () => {
   state.markets.forEach(m => { m.sig = null; });
   rebuildSignals();
   renderSignals();
-  localStorage.removeItem(KEY);
+  state.done = false;
   state.cursor = 0; state.round = 0; state.scannedRound = 0;
+  saveCache();
   runRounds();
 };
 
@@ -1336,7 +1349,7 @@ $("copyReport").onclick = async () => {
   catch { window.prompt("Copy the report:", txt); }
 };
 
-window.__radar = { state, candles, historyCandles, coinSignals, toPair, analyze, settle, scanSlice, loadUniverse, drawings };
+window.__radar = { state, candles, historyCandles, coinSignals, toPair, analyze, settle, scanSlice, loadUniverse, saveCache, drawings };
 
 (async function boot() {
   initChart();
@@ -1348,7 +1361,14 @@ window.__radar = { state, candles, historyCandles, coinSignals, toPair, analyze,
     paintStatus("Connection error", "warn");
     setProgress(0, "Could not reach Gate.io — try Refresh.");
   }
-  runRounds();
+  if (state.done) {
+    paintStatus("Saved", "live");
+    setProgress(1, `All ${state.total} markets checked · ${state.signals.length} signals saved`);
+    saveCache();
+  } else {
+    setProgress(state.scanned / Math.max(1, state.total), `Resuming · ${state.scanned} of ${state.total} markets`);
+    runRounds();
+  }
   setInterval(tickCountdown, 30_000);
   setInterval(() => { renderSignals(); }, 45_000);
 })();
