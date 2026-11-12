@@ -22,7 +22,6 @@
   .num{font-variant-numeric:tabular-nums}
   button{font-family:inherit;cursor:pointer}
 
-  /* ---------- header ---------- */
   header.top{position:sticky;top:0;z-index:30;background:rgba(255,255,255,.96);backdrop-filter:blur(10px);
     border-bottom:1px solid var(--line)}
   .top-row{display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:10px 14px}
@@ -40,15 +39,14 @@
   .btn:hover{background:#f8fafc}
   .btn.primary{background:var(--lime);border-color:var(--lime);color:#000}
   .btn.primary:hover{background:#bef264}
+  .btn.small{padding:4px 9px;font-size:11.5px;border-radius:8px}
 
-  /* ---------- scan line ---------- */
   .scanline{display:flex;align-items:center;gap:10px;padding:0 14px 9px}
   .scanline .k{font-size:10.5px;font-weight:800;color:#475569;white-space:nowrap}
   .scanline .bar{flex:1;height:5px;border-radius:999px;background:#eef1f5;overflow:hidden;min-width:70px}
   .scanline .bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,#a3e635,#65a30d);transition:width .3s}
   .scanline .t{font-size:10.5px;color:#475569;white-space:nowrap;font-weight:700}
 
-  /* ---------- cards ---------- */
   main{max-width:1180px;margin:0 auto;padding:12px;display:grid;gap:12px}
   .card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden}
   .card h2{margin:0;font-size:13px;font-weight:800}
@@ -61,7 +59,6 @@
   .chip.amber{background:#fffbeb;color:#b45309}
   .muted{color:var(--muted);font-size:11px}
 
-  /* ---------- signal strip ---------- */
   .strip{display:flex;gap:10px;overflow-x:auto;padding:12px;direction:rtl;scroll-snap-type:x proximity;
     scrollbar-width:thin}
   .strip::-webkit-scrollbar{height:8px}
@@ -89,17 +86,65 @@
   .sig-foot{font-size:10px;color:#94a3b8;border-top:1px solid #f1f3f6;padding-top:6px;display:flex;
     justify-content:space-between;gap:8px}
 
-  /* ---------- chart ---------- */
   .chart-card .card-head{gap:10px}
   .sym-title{font-size:18px;font-weight:800}
-  #chart{height:min(64dvh,540px);min-height:300px;width:100%}
+  .toolbar{display:flex;flex-wrap:wrap;gap:4px;align-items:center;padding:7px 10px;border-bottom:1px solid var(--line);background:#fbfcfd}
+  .toolbar .tb{display:inline-flex;align-items:center;justify-content:center;min-width:30px;height:28px;padding:0 7px;
+    border:1px solid transparent;background:transparent;border-radius:8px;font-size:12.5px;font-weight:700;color:#475569}
+  .toolbar .tb:hover{background:#eef2f6}
+  .toolbar .tb.on{background:#111214;color:#a3e635;border-color:#111214}
+  .toolbar .sep{width:1px;height:18px;background:var(--line);margin:0 3px}
+  .toolbar .hint{margin-left:auto;font-size:10.5px;color:#94a3b8}
+  .chart-wrap{position:relative}
+  #chart{height:min(62dvh,520px);min-height:300px;width:100%}
+  #draw{position:absolute;inset:0;z-index:3;pointer-events:none}
+  #draw.active{pointer-events:auto;cursor:crosshair}
   .legend{display:flex;flex-wrap:wrap;gap:12px;padding:9px 14px;border-top:1px solid var(--line);font-size:10.5px;color:#475569;align-items:center}
   .legend i{display:inline-block;width:14px;height:0;border-top:2px solid;margin-right:5px;vertical-align:middle}
+
+  .modal{position:fixed;inset:0;z-index:60;display:grid;place-items:center;padding:16px;background:rgba(15,23,42,.45);overflow:auto}
+  .modal[hidden]{display:none}
+  .modal-box{background:#fff;border-radius:16px;width:100%;max-width:920px;max-height:90vh;overflow:auto;
+    box-shadow:0 24px 70px rgba(15,23,42,.28);padding:16px}
+  .modal-box.small{max-width:360px}
+  .modal-box h3{margin:0 0 8px;font-size:15px}
+  .modal-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px}
+  .input{width:100%;height:36px;border:1px solid var(--line);border-radius:10px;padding:0 10px;font-size:13px;outline:none;background:#fff}
+  .input:focus{border-color:#a3e635;box-shadow:0 0 0 3px #f2fce0}
+  .modal-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:10px}
+  .err{color:#b91c1c;font-size:11.5px;margin:8px 0 0}
+  .report-controls{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line)}
+  .report-controls label{font-size:11.5px;color:#475569;display:flex;align-items:center;gap:5px}
+  .report-controls select{height:30px;border:1px solid var(--line);border-radius:8px;padding:0 6px;font-size:12px;background:#fff}
+  .coin-list{max-height:170px;overflow:auto;border:1px solid var(--line);border-radius:12px;padding:6px;margin:10px 0;
+    display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:2px 8px}
+  .coin-list label{display:flex;align-items:center;gap:6px;font-size:11.5px;padding:2px 4px;border-radius:6px;cursor:pointer}
+  .coin-list label:hover{background:#f8fafc}
+  .coin-list.hidden{display:none}
+  .report-body{font-size:12px}
+  .report-body table{width:100%;border-collapse:collapse;font-size:11.5px}
+  .report-body th,.report-body td{padding:6px 8px;border-bottom:1px solid #eef1f5;text-align:right;white-space:nowrap}
+  .report-body th{background:#fbfcfd;color:#64748b;font-weight:700;font-size:10.5px;text-transform:uppercase;letter-spacing:.03em}
+  .report-body tbody tr:hover{background:#f8fafc}
+  .report-body tfoot td{font-weight:800;border-top:2px solid var(--line);background:#fbfcfd}
+  .report-body .pos{color:#047857;font-weight:700}
+  .report-body .neg{color:#b91c1c;font-weight:700}
+  .report-note{font-size:11px;color:#64748b;margin:8px 0}
+  .report-text{display:none;white-space:pre;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px}
 
   .boot{padding:14px;font-size:12px;color:#475569;display:flex;align-items:center;gap:10px}
   footer{max-width:1180px;margin:0 auto;padding:0 14px 18px;color:#94a3b8;font-size:11px;display:flex;flex-wrap:wrap;gap:10px}
 
   @media (min-width:900px){ .sig{width:200px} }
+
+  @media print{
+    body{background:#fff}
+    header.top, main, footer, .report-controls, .coin-list, .modal-head, #reportProgress, .report-note{display:none !important}
+    .modal{position:static;background:#fff;padding:0;display:block}
+    .modal-box{box-shadow:none;max-height:none;max-width:100%;padding:0}
+    #authModal{display:none !important}
+    .report-body table{font-size:11px}
+  }
 </style>
 </head>
 <body>
@@ -121,6 +166,7 @@
     <span class="chip" id="countdown">—</span>
     <div class="actions">
       <button class="btn" id="mode" title="Toggle the signal quality filter">Quality: High</button>
+      <button class="btn" id="reportBtn" title="Open the signal report">Report</button>
       <button class="btn primary" id="refresh">Refresh</button>
     </div>
   </div>
@@ -149,7 +195,29 @@
       <span class="chip" id="chartState">…</span>
       <span class="muted" id="chartRange" style="margin-left:auto"></span>
     </div>
-    <div id="chart"></div>
+
+    <div class="toolbar" id="tools">
+      <button class="tb on" data-tool="none" title="Cursor (pan / zoom)">↖</button>
+      <span class="sep"></span>
+      <button class="tb" data-tool="trend" title="Trend line">／</button>
+      <button class="tb" data-tool="ray" title="Ray">→</button>
+      <button class="tb" data-tool="hline" title="Horizontal line">—</button>
+      <button class="tb" data-tool="vline" title="Vertical line">❙</button>
+      <button class="tb" data-tool="rect" title="Rectangle">▭</button>
+      <button class="tb" data-tool="fib" title="Fib retracement">≋</button>
+      <button class="tb" data-tool="text" title="Text note">T</button>
+      <button class="tb" data-tool="ruler" title="Measure move in %">↔ %</button>
+      <span class="sep"></span>
+      <button class="tb" id="undoDraw" title="Undo last drawing">↶</button>
+      <button class="tb" id="clearDraw" title="Clear drawings for this coin">✕</button>
+      <span class="hint" id="toolHint">Cursor: drag the chart. Pick a tool to draw. Drawings are saved per coin.</span>
+    </div>
+
+    <div class="chart-wrap" id="chartWrap">
+      <div id="chart"></div>
+      <canvas id="draw"></canvas>
+    </div>
+
     <div class="legend">
       <span><i style="border-color:#22c55e"></i>Support</span>
       <span><i style="border-color:#94a3b8"></i>Midline = TP target</span>
@@ -168,6 +236,47 @@
   <span id="updated">—</span>
 </footer>
 
+<div class="modal" id="authModal" hidden>
+  <div class="modal-box small">
+    <h3>Report access</h3>
+    <p class="muted" style="margin:0 0 10px">Enter the password to open the report.</p>
+    <input id="pwInput" class="input" type="password" placeholder="Password" autocomplete="off" inputmode="numeric">
+    <p class="err" id="pwErr" hidden>Wrong password.</p>
+    <div class="modal-actions">
+      <button class="btn" id="pwCancel">Cancel</button>
+      <button class="btn primary" id="pwOk">Unlock</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal" id="reportModal" hidden>
+  <div class="modal-box">
+    <div class="modal-head">
+      <h3>Signal report — daily</h3>
+      <div style="display:flex;gap:6px">
+        <button class="btn small" id="printReport">Print</button>
+        <button class="btn small" id="copyReport">Copy text</button>
+        <button class="btn small" id="reportClose">Close</button>
+      </div>
+    </div>
+
+    <div class="report-controls">
+      <label>From <select id="fromYear"></select></label>
+      <label>To <select id="toYear"></select></label>
+      <input id="coinSearch" class="input" style="width:150px;height:30px" placeholder="Filter coins…">
+      <button class="btn small" id="pickAll">All coins</button>
+      <button class="btn small" id="pickNone">Clear</button>
+      <button class="btn small primary" id="runReport">Run report</button>
+      <span class="muted" id="reportProgress"></span>
+    </div>
+
+    <div class="coin-list" id="coinList"></div>
+    <p class="report-note" id="reportNote">Pick coins (or All coins) and a year range, then Run report. Each coin uses its last 1000 daily candles.</p>
+    <div class="report-body" id="reportBody"></div>
+    <pre class="report-text" id="reportText"></pre>
+  </div>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/lightweight-charts@5/dist/lightweight-charts.standalone.production.js"></script>
 <script type="module">
 /* ENGINE-START */
@@ -176,8 +285,6 @@
    Support band = smoothed close ± MULT·ATR, midline from the ALMA smoothing.
    A signal fires when the low pierces support and the candle closes back above
    it. Entry = that close. TP = the grey midline. Stop = 25% below entry.
-   Outcome: TP when price touches the midline, STOP when price trades 25% below
-   entry first, OPEN while neither has happened.
    ============================================================================ */
 const W = 80, BANDWIDTH = 2, OFFSET = 0.85, SIGMA = 8, ATR_LEN = 100, MULT = 4;
 const STOP_PCT = 0.25, TREND_LOOKBACK = 5;
@@ -220,7 +327,6 @@ function bands(candles) {
   return { mid, sup, res, atr };
 }
 
-/* entry = close, TP = grey midline, stop = 25% below entry */
 function analyze(candles) {
   const b = bands(candles);
   const { mid, sup, atr } = b;
@@ -232,7 +338,7 @@ function analyze(candles) {
     const s = sup[i], ps = sup[i - 1];
     if (!Number.isFinite(s) || !Number.isFinite(ps) || !Number.isFinite(atr[i])) continue;
     if (!(c.l < s && p.l >= ps)) continue;
-    if (!(mid[i] > c.c)) continue;                    // TP must sit above the entry
+    if (!(mid[i] > c.c)) continue;
     const reclaim = c.c > s;
     const trendUp = Number.isFinite(mid[i - TREND_LOOKBACK]) && mid[i] > mid[i - TREND_LOOKBACK];
     signals.push({
@@ -244,7 +350,6 @@ function analyze(candles) {
   return { ...b, signals };
 }
 
-/* walk a signal forward: stop first (conservative), then the midline target */
 function settle(candles, s) {
   const lastClose = candles[candles.length - 1].c;
   for (let j = s.i + 1; j < candles.length; j++) {
@@ -266,9 +371,6 @@ const CHART_BARS = 900;
 const STABLE = new Set("usdt usdc dai tusd busd fdusd usde usds usdd pyusd usdg rlusd lusd susd usdp eurc eurt frax gho usdb usdx ousd mim usd1".split(" "));
 const toPair = s => s.includes("_") ? s.toUpperCase() : `${s.replace(/USDT$/i, "")}_USDT`.toUpperCase();
 
-/* Gate throttles a browser that fires thousands of calls, and a refused call
-   arrives without CORS headers. Every request therefore takes a slot in one
-   global queue whose gap widens whenever Gate starts pushing back. */
 let nextSlot = 0, gap = 130;
 async function api(path, params, tries = 3, priority = false) {
   const qs = new URLSearchParams(Object.entries(params || {}).map(([k, v]) => [k, String(v)]));
@@ -333,7 +435,6 @@ async function candles(pair, bars, priority = false) {
   return parse(rows, D1.ms).slice(-bars);
 }
 
-/* ---- snapshot cache -------------------------------------------------------- */
 const KEY = "shahab-radar-d1-v6";
 let snap = null;
 function loadCache() {
@@ -347,9 +448,6 @@ function saveCache() {
   try { if (snap) localStorage.setItem(KEY, JSON.stringify(snap)); } catch {}
 }
 
-/* ============================================================================
-   STATE
-   ============================================================================ */
 const state = {
   markets: [], signals: [], at: 0, cursor: 0, round: 0, gen: 0, scannedRound: 0,
   busy: false, total: 0, scanned: 0, strict: true, charts: new Map(), focusT: null, drawSeq: 0, selectedSymbol: null,
@@ -371,9 +469,6 @@ function setProgress(frac, text) {
   if (text) $("scanText").textContent = text;
 }
 
-/* ============================================================================
-   SIGNAL STRIP — newest on the right, older to the left
-   ============================================================================ */
 function outcomeChip(s) {
   if (s.outcome === "TP") return `<span class="sig-status tp">TP hit${s.days ? ` · ${s.days}d` : ""}</span>`;
   if (s.outcome === "STOP") return `<span class="sig-status sl">Stopped${s.days ? ` · ${s.days}d` : ""}</span>`;
@@ -424,9 +519,6 @@ function renderSignals() {
   box.appendChild(frag);
 }
 
-/* ============================================================================
-   SCAN — continuous sweep of every market, one minute rest, repeat
-   ============================================================================ */
 async function loadUniverse(force) {
   const cached = !force && loadCache();
   if (cached) {
@@ -446,6 +538,7 @@ async function loadUniverse(force) {
   state.total = state.markets.length;
   rebuildSignals();
   renderAll();
+  buildReportCoins();
 }
 
 function rebuildSignals() {
@@ -489,7 +582,7 @@ async function scanSlice() {
           }
         }
         m.scannedAt = Date.now();
-      } catch (e) { /* a market that fails keeps its previous state */ }
+      } catch (e) {}
       done++; state.scanned++; state.scannedRound++;
       setProgress(state.scannedRound / slice.length,
         `Round ${state.round + 1} · ${state.scannedRound} of ${total} markets`);
@@ -523,9 +616,6 @@ async function runRounds() {
   }
 }
 
-/* ============================================================================
-   CHART
-   ============================================================================ */
 let chartApi = null, candleSeries = null, bandS = null, markersApi = null, priceLines = [];
 
 function initChart() {
@@ -555,7 +645,7 @@ function initChart() {
 }
 
 async function selectSymbol(symbol, focusT) {
-  const seq = ++state.drawSeq;          // a slower earlier load must not overwrite the chart
+  const seq = ++state.drawSeq;
   state.selectedSymbol = symbol;
   state.focusT = focusT == null ? null : focusT;
   $("chartSym").textContent = symbol;
@@ -589,7 +679,6 @@ function drawChart(symbol, c) {
   bandS.mid.setData(pts(res.mid));
   bandS.res.setData(pts(res.res));
 
-  /* every daily signal is marked: target hit, stopped, still open */
   markersApi.setMarkers(settled.map(s => {
     const t = Math.floor(s.t / 1000);
     const isFocus = focusSig && Math.floor(focusSig.t / 1000) === t;
@@ -615,7 +704,6 @@ function drawChart(symbol, c) {
     add(focusSig.sl, "#ef4444", "SL −25%", LightweightCharts.LineStyle.Dashed);
   }
 
-  /* readable window around the selected signal, or the latest candles */
   const n = c.length, viewBars = 170;
   const ts = chartApi.timeScale();
   let from, to;
@@ -644,17 +732,405 @@ function drawChart(symbol, c) {
       : focusSig.outcome === "STOP" ? `Stopped in ${focusSig.days}d` : "Signal open";
   }
   $("chartRange").textContent = `D1 · ${c.length} candles · ${dayKey(c[0].t)} → ${dayKey(last.t)}`;
+  renderDrawings();
 }
 
-/* ============================================================================
-   WIRING
-   ============================================================================ */
+/* ===== DRAWING TOOLS ===== */
+const DRAW_KEY = "shahab-radar-drawings-v1";
+const DRAW_COLOR = "#0284c7", DRAW_LIME = "#65a30d", FIB_COLOR = "#7c3aed";
+let drawings = {};
+try { drawings = JSON.parse(localStorage.getItem(DRAW_KEY) || "{}") || {}; } catch { drawings = {}; }
+let tool = "none", draft = null, drawCanvas = null, drawCtx = null, drawDpr = 1;
+
+const TOOL_HINTS = {
+  none: "Cursor: drag the chart. Pick a tool to draw. Drawings are saved per coin.",
+  trend: "Trend line — drag from A to B.",
+  ray: "Ray — drag from the start point, it extends to the right.",
+  hline: "Horizontal line — click a price level.",
+  vline: "Vertical line — click a date.",
+  rect: "Rectangle — drag to box an area.",
+  fib: "Fib retracement — drag from swing low to swing high (or the reverse).",
+  text: "Text — click where the note should sit.",
+  ruler: "Measure — drag to see the move in price and %.",
+};
+
+function saveDrawings() {
+  try { localStorage.setItem(DRAW_KEY, JSON.stringify(drawings)); } catch {}
+}
+function shapesOf(symbol) {
+  if (!symbol) return [];
+  return drawings[symbol] || (drawings[symbol] = []);
+}
+
+function initDrawing() {
+  drawCanvas = $("draw");
+  drawCtx = drawCanvas.getContext("2d");
+  const wrap = $("chartWrap");
+  const resize = () => {
+    const r = wrap.getBoundingClientRect();
+    drawDpr = window.devicePixelRatio || 1;
+    drawCanvas.width = Math.max(1, Math.round(r.width * drawDpr));
+    drawCanvas.height = Math.max(1, Math.round(r.height * drawDpr));
+    drawCanvas.style.width = `${r.width}px`;
+    drawCanvas.style.height = `${r.height}px`;
+    renderDrawings();
+  };
+  new ResizeObserver(resize).observe(wrap);
+  resize();
+  chartApi.timeScale().subscribeVisibleLogicalRangeChange(() => renderDrawings());
+
+  const setTool = k => {
+    tool = k; draft = null;
+    document.querySelectorAll("#tools .tb[data-tool]").forEach(b => b.classList.toggle("on", b.dataset.tool === k));
+    drawCanvas.classList.toggle("active", k !== "none");
+    $("toolHint").textContent = TOOL_HINTS[k] || "";
+    renderDrawings();
+  };
+  document.querySelectorAll("#tools .tb[data-tool]").forEach(b => b.onclick = () => setTool(b.dataset.tool));
+  $("undoDraw").onclick = () => { const arr = shapesOf(state.selectedSymbol); arr.pop(); saveDrawings(); renderDrawings(); };
+  $("clearDraw").onclick = () => { if (state.selectedSymbol) drawings[state.selectedSymbol] = []; saveDrawings(); renderDrawings(); };
+
+  const point = e => {
+    const r = drawCanvas.getBoundingClientRect();
+    const x = e.clientX - r.left, y = e.clientY - r.top;
+    const p = candleSeries.coordinateToPrice(y);
+    const t = chartApi.timeScale().coordinateToTime(x);
+    return { x, y, p, t: t == null ? null : Number(t) };
+  };
+
+  drawCanvas.addEventListener("pointerdown", e => {
+    if (tool === "none") return;
+    const pt = point(e);
+    drawCanvas.setPointerCapture(e.pointerId);
+    if (tool === "hline" && Number.isFinite(pt.p)) { shapesOf(state.selectedSymbol).push({ type: "hline", p: pt.p }); saveDrawings(); renderDrawings(); return; }
+    if (tool === "vline" && pt.t != null) { shapesOf(state.selectedSymbol).push({ type: "vline", t: pt.t }); saveDrawings(); renderDrawings(); return; }
+    if (tool === "text") {
+      const text = window.prompt("Text note");
+      if (text && Number.isFinite(pt.p) && pt.t != null) { shapesOf(state.selectedSymbol).push({ type: "text", t: pt.t, p: pt.p, text }); saveDrawings(); renderDrawings(); }
+      return;
+    }
+    if (!Number.isFinite(pt.p) || pt.t == null) return;
+    draft = { type: tool, t1: pt.t, p1: pt.p, t2: pt.t, p2: pt.p };
+  });
+
+  drawCanvas.addEventListener("pointermove", e => {
+    if (!draft) return;
+    const pt = point(e);
+    if (Number.isFinite(pt.p)) draft.p2 = pt.p;
+    if (pt.t != null) draft.t2 = pt.t;
+    renderDrawings();
+  });
+
+  const finish = () => {
+    if (!draft) return;
+    const moved = draft.t1 !== draft.t2 || draft.p1 !== draft.p2;
+    if (moved) { shapesOf(state.selectedSymbol).push({ ...draft }); saveDrawings(); }
+    draft = null;
+    renderDrawings();
+  };
+  drawCanvas.addEventListener("pointerup", finish);
+  drawCanvas.addEventListener("pointercancel", () => { draft = null; renderDrawings(); });
+}
+
+function xOf(t) { const x = chartApi.timeScale().timeToCoordinate(t); return x == null ? null : x; }
+function yOf(p) { return candleSeries.priceToCoordinate(p); }
+
+function drawShape(ctx, s, W, H) {
+  ctx.lineWidth = 1.5;
+  ctx.strokeStyle = DRAW_COLOR;
+  ctx.fillStyle = "rgba(2,132,199,.07)";
+  ctx.font = "11px ui-sans-serif, system-ui, sans-serif";
+  ctx.setLineDash([]);
+
+  if (s.type === "hline") {
+    const y = yOf(s.p); if (y == null) return;
+    ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke();
+    tag(ctx, W - 4, y, ` ${fmt(s.p)} `, DRAW_COLOR, "right");
+    return;
+  }
+  if (s.type === "vline") {
+    const x = xOf(s.t); if (x == null) return;
+    ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke();
+    return;
+  }
+  if (s.type === "text") {
+    const x = xOf(s.t), y = yOf(s.p);
+    if (x == null || y == null) return;
+    ctx.fillStyle = "#111214";
+    ctx.font = "600 12px ui-sans-serif, system-ui, sans-serif";
+    ctx.fillText(s.text, x + 6, y - 6);
+    return;
+  }
+
+  const x1 = xOf(s.t1), x2 = xOf(s.t2), y1 = yOf(s.p1), y2 = yOf(s.p2);
+  if (x1 == null || x2 == null || y1 == null || y2 == null) return;
+
+  if (s.type === "rect") {
+    ctx.beginPath();
+    ctx.rect(Math.min(x1, x2), Math.min(y1, y2), Math.abs(x2 - x1), Math.abs(y2 - y1));
+    ctx.fill(); ctx.stroke();
+    return;
+  }
+
+  if (s.type === "fib") {
+    const levels = [0, 0.236, 0.382, 0.5, 0.618, 0.786, 1];
+    ctx.strokeStyle = FIB_COLOR;
+    ctx.setLineDash([4, 3]);
+    for (const lv of levels) {
+      const price = s.p1 + (s.p2 - s.p1) * lv;
+      const y = yOf(price);
+      if (y == null) continue;
+      ctx.beginPath(); ctx.moveTo(Math.min(x1, x2), y); ctx.lineTo(Math.max(x1, x2), y); ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.fillStyle = FIB_COLOR;
+      ctx.fillText(`${lv.toFixed(3)}  ${fmt(price)}`, Math.max(x1, x2) + 6, y - 3);
+      ctx.setLineDash([4, 3]);
+    }
+    ctx.setLineDash([]);
+    return;
+  }
+
+  if (s.type === "ruler") {
+    const dP = s.p2 - s.p1, dPct = s.p1 ? (dP / s.p1) * 100 : 0;
+    const up = dPct >= 0;
+    ctx.strokeStyle = up ? DRAW_LIME : "#dc2626";
+    ctx.fillStyle = up ? "rgba(101,163,13,.10)" : "rgba(220,38,38,.10)";
+    ctx.beginPath(); ctx.rect(Math.min(x1, x2), Math.min(y1, y2), Math.abs(x2 - x1), Math.abs(y2 - y1)); ctx.fill();
+    ctx.setLineDash([5, 4]);
+    ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
+    ctx.setLineDash([]);
+    const label = `${up ? "+" : ""}${dPct.toFixed(2)}%  ·  ${fmt(Math.abs(dP))}`;
+    tag(ctx, (x1 + x2) / 2, (y1 + y2) / 2, ` ${label} `, up ? DRAW_LIME : "#dc2626", "center");
+    return;
+  }
+
+  ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2);
+  if (s.type === "ray") {
+    const dx = x2 - x1;
+    if (dx !== 0) { const k = (W - x2) / dx; if (k > 0) ctx.lineTo(x2 + dx * k, y2 + (y2 - y1) * k); }
+  }
+  ctx.stroke();
+}
+
+function tag(ctx, x, y, text, color, align) {
+  ctx.font = "700 10.5px ui-sans-serif, system-ui, sans-serif";
+  const w = ctx.measureText(text).width + 8;
+  const bx = align === "right" ? x - w : align === "center" ? x - w / 2 : x;
+  ctx.fillStyle = color;
+  ctx.beginPath();
+  ctx.roundRect ? ctx.roundRect(bx, y - 9, w, 16, 4) : ctx.rect(bx, y - 9, w, 16);
+  ctx.fill();
+  ctx.fillStyle = "#fff";
+  ctx.fillText(text.trim(), bx + 4, y + 2);
+}
+
+function renderDrawings() {
+  if (!drawCtx || !chartApi) return;
+  const W = drawCanvas.width / drawDpr, H = drawCanvas.height / drawDpr;
+  drawCtx.setTransform(drawDpr, 0, 0, drawDpr, 0, 0);
+  drawCtx.clearRect(0, 0, W, H);
+  for (const s of shapesOf(state.selectedSymbol)) drawShape(drawCtx, s, W, H);
+  if (draft) {
+    drawCtx.save();
+    drawCtx.globalAlpha = .85;
+    drawShape(drawCtx, draft, W, H);
+    if (draft.type !== "rect" && draft.type !== "ruler") {
+      for (const pt of [[draft.t1, draft.p1], [draft.t2, draft.p2]]) {
+        const x = xOf(pt[0]), y = yOf(pt[1]);
+        if (x == null || y == null) continue;
+        drawCtx.fillStyle = "#fff"; drawCtx.strokeStyle = DRAW_COLOR;
+        drawCtx.beginPath(); drawCtx.arc(x, y, 3.5, 0, Math.PI * 2); drawCtx.fill(); drawCtx.stroke();
+      }
+    }
+    drawCtx.restore();
+  }
+}
+
+/* ===== REPORT (password 1213) ===== */
+const REPORT_PASSWORD = "1213";
+const reportCache = new Map();
+let lastReport = null;
+
+function openAuth() {
+  $("pwInput").value = ""; $("pwErr").hidden = true;
+  $("authModal").hidden = false;
+  setTimeout(() => $("pwInput").focus(), 40);
+}
+function closeAuth() { $("authModal").hidden = true; }
+function unlock() {
+  if ($("pwInput").value.trim() === REPORT_PASSWORD) { closeAuth(); openReport(); }
+  else { $("pwErr").hidden = false; $("pwInput").value = ""; }
+}
+
+function buildReportCoins() {
+  const box = $("coinList");
+  if (!box || box.dataset.built === "1") return;
+  box.dataset.built = "1";
+  const frag = document.createDocumentFragment();
+  for (const m of state.markets) {
+    const label = document.createElement("label");
+    label.dataset.sym = m.symbol;
+    label.innerHTML = `<input type="checkbox" value="${m.symbol}"> ${m.symbol}`;
+    frag.appendChild(label);
+  }
+  box.innerHTML = "";
+  box.appendChild(frag);
+}
+
+function yearsInit() {
+  const now = new Date().getUTCFullYear();
+  const from = $("fromYear"), to = $("toYear");
+  if (from.options.length) return;
+  for (let y = now - 3; y <= now; y++) {
+    from.add(new Option(String(y), String(y)));
+    to.add(new Option(String(y), String(y)));
+  }
+  from.value = String(now - 2);
+  to.value = String(now);
+}
+
+function openReport() { yearsInit(); buildReportCoins(); $("reportModal").hidden = false; }
+function closeReport() { $("reportModal").hidden = true; }
+
+function selectedCoins() {
+  return Array.from(document.querySelectorAll("#coinList input:checked")).map(i => i.value);
+}
+
+async function coinSignals(symbol) {
+  if (reportCache.has(symbol)) return reportCache.get(symbol);
+  const m = state.markets.find(x => x.symbol === symbol);
+  const own = await candles(m ? m.pair : symbol, 1000);
+  const res = analyze(own);
+  const rows = res.signals.map(s => settle(own, s));
+  reportCache.set(symbol, rows);
+  return rows;
+}
+
+function reportStats(rows) {
+  const tp = rows.filter(r => r.outcome === "TP");
+  const sl = rows.filter(r => r.outcome === "STOP");
+  const open = rows.filter(r => r.outcome === "OPEN");
+  const closed = tp.length + sl.length;
+  const netPct = [...tp, ...sl].reduce((a, r) => a + r.pnlPct, 0);
+  return {
+    signals: rows.length, tp: tp.length, sl: sl.length, open: open.length, closed,
+    tpRate: closed ? (tp.length / closed) * 100 : null,
+    netPct, avgPct: closed ? netPct / closed : null,
+  };
+}
+
+function reportTable(coins, range) {
+  const head = `<thead><tr>
+    <th>Coin</th><th>Signals</th><th>TP</th><th>Stop</th><th>Open</th>
+    <th>TP rate</th><th>Net %</th><th>Avg % / trade</th></tr></thead>`;
+  const total = { signals: 0, tp: 0, sl: 0, open: 0, netPct: 0, closed: 0 };
+  const body = coins.map(c => {
+    const st = reportStats(c.rows);
+    total.signals += st.signals; total.tp += st.tp; total.sl += st.sl; total.open += st.open;
+    total.netPct += st.netPct; total.closed += st.closed;
+    return `<tr>
+      <td><b>${c.symbol}</b></td>
+      <td>${st.signals}</td>
+      <td>${st.tp}</td>
+      <td>${st.sl}</td>
+      <td>${st.open}</td>
+      <td>${st.tpRate == null ? "—" : st.tpRate.toFixed(1) + "%"}</td>
+      <td class="${st.netPct >= 0 ? "pos" : "neg"}">${pct(st.netPct)}</td>
+      <td>${st.avgPct == null ? "—" : pct(st.avgPct)}</td>
+    </tr>`;
+  }).join("");
+  const tpRate = total.closed ? (total.tp / total.closed) * 100 : null;
+  const foot = `<tfoot><tr>
+      <td>All selected (${coins.length})</td>
+      <td>${total.signals}</td><td>${total.tp}</td><td>${total.sl}</td><td>${total.open}</td>
+      <td>${tpRate == null ? "—" : tpRate.toFixed(1) + "%"}</td>
+      <td class="${total.netPct >= 0 ? "pos" : "neg"}">${pct(total.netPct)}</td>
+      <td>${total.closed ? pct(total.netPct / total.closed) : "—"}</td>
+    </tr></tfoot>`;
+  return `<p class="report-note">Daily signals · ${range.from} → ${range.to} · net % sums every closed trade with equal weight (TP = move to the midline, stop = −25%).</p>
+    <table>${head}<tbody>${body}</tbody>${foot}</table>`;
+}
+
+function reportText(coins, range, total) {
+  const pad = (s, n) => String(s).padEnd(n);
+  const padL = (s, n) => String(s).padStart(n);
+  const lines = [];
+  lines.push("SHAHAB RADAR — DAILY SIGNAL REPORT");
+  lines.push(`Range: ${range.from} → ${range.to}`);
+  lines.push(`Coins: ${coins.length}`);
+  lines.push("");
+  lines.push(pad("COIN", 12) + padL("SIGNALS", 9) + padL("TP", 6) + padL("STOP", 6) + padL("OPEN", 6) + padL("TP%", 8) + padL("NET%", 10) + padL("AVG%", 9));
+  lines.push("-".repeat(66));
+  for (const c of coins) {
+    const st = reportStats(c.rows);
+    lines.push(
+      pad(c.symbol, 12) + padL(st.signals, 9) + padL(st.tp, 6) + padL(st.sl, 6) + padL(st.open, 6) +
+      padL(st.tpRate == null ? "-" : st.tpRate.toFixed(1), 8) +
+      padL(st.netPct.toFixed(2), 10) + padL(st.avgPct == null ? "-" : st.avgPct.toFixed(2), 9)
+    );
+  }
+  lines.push("-".repeat(66));
+  lines.push(pad("TOTAL", 12) + padL(total.signals, 9) + padL(total.tp, 6) + padL(total.sl, 6) + padL(total.open, 6) +
+    padL(total.tpRate == null ? "-" : total.tpRate.toFixed(1), 8) +
+    padL(total.netPct.toFixed(2), 10) + padL(total.avgPct == null ? "-" : total.avgPct.toFixed(2), 9));
+  lines.push("");
+  lines.push(`Data source: Gate.io daily candles · generated ${new Date().toISOString().slice(0, 10)}`);
+  return lines.join("\n");
+}
+
+async function runReport() {
+  const coinsSel = selectedCoins();
+  const from = Number($("fromYear").value), to = Number($("toYear").value);
+  const fromMs = Date.UTC(Math.min(from, to), 0, 1) / 1000;
+  const toMs = Date.UTC(Math.max(from, to) + 1, 0, 1) / 1000;
+  if (!coinsSel.length) {
+    $("reportBody").innerHTML = `<p class="report-note">Select at least one coin (or “All coins”).</p>`;
+    return;
+  }
+  const body = $("reportBody");
+  body.innerHTML = `<p class="report-note">Loading ${coinsSel.length} coin(s)…</p>`;
+  $("runReport").disabled = true;
+
+  const queue = [...coinsSel];
+  const out = [];
+  let done = 0;
+  const worker = async () => {
+    for (;;) {
+      const sym = queue.shift();
+      if (!sym) return;
+      try {
+        const rows = (await coinSignals(sym)).filter(r => r.t / 1000 >= fromMs && r.t / 1000 < toMs);
+        out.push({ symbol: sym, rows });
+      } catch (e) { out.push({ symbol: sym, rows: [] }); }
+      done++;
+      $("reportProgress").textContent = `${done} / ${coinsSel.length}`;
+    }
+  };
+  await Promise.all(Array.from({ length: 4 }, worker));
+
+  out.sort((a, b) => a.symbol.localeCompare(b.symbol));
+  const range = { from: `${new Date(fromMs * 1000).getUTCFullYear()}`, to: `${new Date((toMs - 86400) * 1000).getUTCFullYear()}` };
+  const total = out.reduce((acc, c) => {
+    const st = reportStats(c.rows);
+    acc.signals += st.signals; acc.tp += st.tp; acc.sl += st.sl; acc.open += st.open;
+    acc.netPct += st.netPct; acc.closed += st.closed;
+    return acc;
+  }, { signals: 0, tp: 0, sl: 0, open: 0, netPct: 0, closed: 0 });
+  total.tpRate = total.closed ? (total.tp / total.closed) * 100 : null;
+  total.avgPct = total.closed ? total.netPct / total.closed : null;
+
+  body.innerHTML = reportTable(out, range);
+  $("reportText").textContent = reportText(out, range, total);
+  $("reportProgress").textContent = "";
+  $("runReport").disabled = false;
+  lastReport = { out, range, total };
+}
+
 function renderAll() {
   renderSignals();
   $("updated").textContent = state.total
     ? `Round ${state.round + 1} · ${Math.min(state.scannedRound, state.total)} of ${state.total} markets`
     : "—";
-  /* open the chart on the newest signal as soon as one exists */
   if (!state.selectedSymbol && state.signals.length) {
     const newest = state.signals.slice().sort((a, b) => b.candleTime - a.candleTime)[0];
     selectSymbol(newest.symbol, newest.candleTime / 1000);
@@ -685,10 +1161,33 @@ $("mode").onclick = async () => {
   runRounds();
 };
 
-window.__radar = { state, candles, toPair, analyze, settle, scanSlice, loadUniverse };
+$("reportBtn").onclick = openAuth;
+$("pwOk").onclick = unlock;
+$("pwCancel").onclick = closeAuth;
+$("pwInput").addEventListener("keydown", e => { if (e.key === "Enter") unlock(); });
+$("reportClose").onclick = closeReport;
+$("runReport").onclick = runReport;
+$("pickAll").onclick = () => { document.querySelectorAll("#coinList input").forEach(i => { i.checked = true; }); };
+$("pickNone").onclick = () => { document.querySelectorAll("#coinList input").forEach(i => { i.checked = false; }); };
+$("coinSearch").oninput = () => {
+  const q = $("coinSearch").value.trim().toUpperCase();
+  document.querySelectorAll("#coinList label").forEach(l => {
+    l.style.display = !q || l.dataset.sym.includes(q) ? "" : "none";
+  });
+};
+$("printReport").onclick = () => window.print();
+$("copyReport").onclick = async () => {
+  const txt = $("reportText").textContent;
+  if (!txt) return;
+  try { await navigator.clipboard.writeText(txt); $("copyReport").textContent = "Copied"; setTimeout(() => $("copyReport").textContent = "Copy text", 1400); }
+  catch { window.prompt("Copy the report:", txt); }
+};
+
+window.__radar = { state, candles, toPair, analyze, settle, scanSlice, loadUniverse, drawings };
 
 (async function boot() {
   initChart();
+  initDrawing();
   tickCountdown();
   try {
     await loadUniverse(false);
