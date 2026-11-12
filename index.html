@@ -462,6 +462,7 @@ function saveCache() {
 const state = {
   markets: [], signals: [], at: 0, cursor: 0, round: 0, gen: 0, scannedRound: 0,
   busy: false, total: 0, scanned: 0, strict: true, charts: new Map(), focusT: null, drawSeq: 0, selectedSymbol: null,
+  reporting: false,
 };
 const $ = id => document.getElementById(id);
 const fmt = v => v == null || !Number.isFinite(v) ? "—"
@@ -619,6 +620,8 @@ async function runRounds() {
     const r0 = state.round;
     while (state.round === r0) {
       if (state.gen !== gen || !state.markets.length) return;
+      /* the report needs the whole request budget while it walks history */
+      if (state.reporting) { await sleep(400); continue; }
       if (state.busy) { await sleep(300); continue; }
       await scanSlice();
     }
@@ -1143,6 +1146,8 @@ async function runReport() {
   const body = $("reportBody");
   body.innerHTML = `<p class="report-note">Loading ${coinsSel.length} coin(s)…</p>`;
   $("runReport").disabled = true;
+  state.reporting = true;
+  setProgress(0, "Report: pausing the scan while history is loaded…");
 
   const queue = [...coinsSel];
   const out = [];
@@ -1162,6 +1167,7 @@ async function runReport() {
     }
   };
   await Promise.all(Array.from({ length: 4 }, worker));
+  state.reporting = false;
 
   out.sort((a, b) => a.symbol.localeCompare(b.symbol));
   const range = { from: `${new Date(fromMs * 1000).getUTCFullYear()}`, to: `${new Date((toMs - 86400) * 1000).getUTCFullYear()}` };
