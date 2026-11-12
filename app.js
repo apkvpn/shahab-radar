@@ -304,7 +304,7 @@ function renderSignals() {
         <span class="right">
           ${outcomeChip(s)}
           <button class="star${state.watch.has(s.symbol) ? " on" : ""}" data-star="${s.symbol}" title="Watch this coin">★</button>
-          <button class="bell${alerts[s.symbol] ? " on" : ""}" data-bell="${s.symbol}" title="${alerts[s.symbol] ? `Alert above ${alerts[s.symbol]}` : "Set a price alert"}">◔</button>
+          <button class="bell${alerts[s.symbol] ? " on" : ""}" data-bell="${s.symbol}" title="${alerts[s.symbol] ? `Alert above ${alerts[s.symbol]}` : "Set a price alert"}">◎</button>
         </span>
       </span>
       ${fresh ? `<span class="badge-new">New Signal</span>` : ""}
@@ -1229,7 +1229,7 @@ function renderInsight(symbol, c) {
   const last = rows.length ? rows[rows.length - 1] : null;
   const m = marketOf(symbol);
   box.innerHTML = [
-    `<span>History <b>${rows.length}</b> signals</span>`,
+    `<span>History <b>${rows.length}</b> signal${rows.length === 1 ? "" : "s"}</span>`,
     `<span>TP <b class="up">${tp.length}</b>${rate == null ? "" : ` · <b class="up">${rate.toFixed(0)}%</b>`}</span>`,
     `<span>Avg gain / TP <b class="up">${avg == null ? "—" : pct(avg)}</b></span>`,
     `<span>Best <b>${best == null ? "—" : pct(best)}</b></span>`,
@@ -1243,13 +1243,15 @@ let volSeries = null, emaSeries = {}, emaOn = false, logOn = false;
 function enhBuildOverlays() {
   if (!chartApi || volSeries) return;
   volSeries = chartApi.addSeries(LightweightCharts.HistogramSeries, {
-    priceFormat: { type: "volume" }, priceScaleId: "vol", lastValueVisible: false, priceLineVisible: false,
-  }, 1);
-  chartApi.priceScale("vol").applyOptions({ scaleMargins: { top: 0.82, bottom: 0 } });
+    priceFormat: { type: "volume" }, priceScaleId: "", lastValueVisible: false, priceLineVisible: false,
+  });
+  try { volSeries.priceScale().applyOptions({ scaleMargins: { top: 0.82, bottom: 0 } }); } catch (e) {}
+  chartApi.priceScale("right").applyOptions({ scaleMargins: { top: 0.16, bottom: 0.16 } });
   ["20", "50", "200"].forEach((n, i) => {
     emaSeries[n] = chartApi.addSeries(LightweightCharts.LineSeries, {
       color: ["#c8f751", "#60a5fa", "#fb7185"][i], lineWidth: 1, priceLineVisible: false,
       lastValueVisible: false, crosshairMarkerVisible: false, visible: false,
+      autoscaleInfoProvider: () => null,
     });
   });
 }
@@ -1275,29 +1277,29 @@ function enhDrawOverlays(c) {
 (function chartTools() {
   const bar = document.getElementById("tools");
   if (!bar) return;
-  const mk = (label, title, fn) => {
+  const mk = (label, title, fn, on) => {
     const b = document.createElement("button");
-    b.className = "tb"; b.textContent = label; b.title = title;
+    b.className = `tb${on ? " on" : ""}`; b.textContent = label; b.title = title;
     b.onclick = () => fn(b); return b;
   };
   const sep = document.createElement("span"); sep.className = "sep";
   const emaBtn = mk("EMA", "Exponential moving averages 20 / 50 / 200", b => {
     emaOn = !emaOn; b.classList.toggle("on", emaOn);
     for (const n of ["20", "50", "200"]) emaSeries[n] && emaSeries[n].applyOptions({ visible: emaOn });
-  });
+  }, false);
   const volBtn = mk("VOL", "Show / hide the volume bars", b => {
-    const on = !volSeries || !volSeries.options().visible;
+    const on = !(volSeries && volSeries.options().visible);
     if (volSeries) volSeries.applyOptions({ visible: on });
-    b.classList.toggle("on", !!on);
-  });
+    b.classList.toggle("on", on);
+  }, true);
   const logBtn = mk("LOG", "Logarithmic price scale", b => {
     logOn = !logOn; b.classList.toggle("on", logOn);
     chartApi.priceScale("right").applyOptions({ mode: logOn ? 1 : 0 });
-  });
+  }, false);
   const fsBtn = mk("⛶", "Fullscreen chart (F)", () => {
     document.querySelector(".chart-card").classList.toggle("fs");
     setTimeout(() => window.dispatchEvent(new Event("resize")), 60);
-  });
+  }, false);
   bar.appendChild(sep);
   [emaBtn, volBtn, logBtn, fsBtn].forEach(b => bar.appendChild(b));
 })();
