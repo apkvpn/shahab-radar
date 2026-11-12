@@ -104,7 +104,7 @@
   .muted{color:var(--muted);font-size:11px}
 
   /* ---------- signal cards ---------- */
-  .sig{flex:0 0 auto;width:196px;direction:ltr;scroll-snap-align:start;display:grid;gap:9px;padding:13px 14px;
+  .sig{display:grid;gap:9px;padding:13px 14px;
     border:1px solid var(--line);border-radius:16px;text-align:left;transition:.2s ease;position:relative;overflow:hidden;
     background:linear-gradient(165deg,rgba(32,38,47,.9),rgba(15,18,23,.95));
     box-shadow:0 10px 30px -22px rgba(0,0,0,.95), 0 1px 0 rgba(255,255,255,.05) inset}
@@ -131,10 +131,10 @@
     box-shadow:0 0 14px -6px rgba(96,165,250,.9)}
   .sig-badge.open{background:rgba(255,255,255,.07);border-color:var(--line-2);color:#a4adbb}
   .sig-rows{display:grid;gap:5px;font-size:11px;color:var(--muted)}
-  .sig-rows span{display:flex;align-items:baseline;gap:7px}
+  .sig-rows span{display:flex;align-items:baseline;gap:7px;min-width:0}
   .sig-rows span > b{margin-left:auto;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11.5px}
   .sig-rows b{color:#f4f6fa;font-weight:700}
-  .sig-rows i{font-style:normal;color:#8ee06a;font-size:10px;font-weight:700}
+  .sig-rows i{font-style:normal;color:#8ee06a;font-size:10px;font-weight:700;white-space:nowrap}
   .sig-rows em{font-style:normal;font-weight:800;width:26px;display:inline-block;letter-spacing:.04em}
   .sig-foot{font-size:10px;color:var(--muted);border-top:1px solid var(--line);padding-top:8px;display:flex;
     justify-content:space-between;gap:8px}
@@ -236,8 +236,7 @@
 
   /* ---------- signal grid ---------- */
   .grid{display:grid;gap:11px;padding:16px 18px;grid-template-columns:repeat(auto-fill,minmax(212px,1fr))}
-  @media (max-width:560px){ .grid{grid-template-columns:repeat(auto-fill,minmax(157px,1fr));padding:12px;gap:9px} }
-  .grid .sig{width:auto;cursor:pointer;outline:none}
+  .grid .sig{cursor:pointer;outline:none}
   .grid .sig:focus-visible{border-color:rgba(200,247,81,.55);box-shadow:0 0 0 3px rgba(163,230,53,.18)}
   .sig-head .right{display:flex;align-items:center;gap:4px}
   .star{border:0;background:transparent;color:#5b6572;font-size:13px;line-height:1;padding:2px 3px;border-radius:6px;transition:.15s}
@@ -258,6 +257,23 @@
   .toast.show{opacity:1;transform:translate(-50%,0)}
 
   @media (min-width:900px){ .grid{grid-template-columns:repeat(auto-fill,minmax(224px,1fr))} }
+  @media (max-width:560px){
+    .grid{grid-template-columns:repeat(auto-fill,minmax(160px,1fr));padding:10px;gap:8px}
+    .sig{padding:10px;gap:7px;border-radius:14px}
+    .sig .sym{font-size:13.5px}
+    .sig-head{flex-wrap:wrap;gap:4px}
+    .tag{font-size:8px;padding:2px 4px}
+    .badge-new{font-size:8px;padding:2px 6px}
+    .px{font-size:11.5px;gap:5px}
+    .sig-rows{font-size:10px;gap:4px}
+    .sig-rows span > b,.sig-rows b{font-size:10px}
+    .sig-rows em{width:19px;font-size:9px}
+    .sig-rows i{font-size:9px}
+    .sig-foot{font-size:9px}
+    .stat b{font-size:17px}
+    .stat{padding:9px 11px}
+    .stats .stat:last-child{grid-column:1/-1}
+  }
   @media (max-width:640px){
     .top-row{padding:10px 14px;gap:8px}
     main{padding:12px;gap:12px}
