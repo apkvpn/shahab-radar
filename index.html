@@ -672,7 +672,7 @@ async function scanSlice() {
   const slice = [];
   for (let i = 0; i < Math.min(BATCH, total); i++) slice.push(state.markets[(start + i) % total]);
   state.cursor = (start + slice.length) % total;
-  if (state.cursor < start) state.round++;
+  if (state.cursor < start) { state.round++; state.done = true; }
   if (start === 0) state.scannedRound = 0;
 
   let done = 0;
@@ -700,7 +700,7 @@ async function scanSlice() {
       } catch (e) {}
       done++; state.scanned++; state.scannedRound++;
       setProgress(state.scannedRound / slice.length,
-        `Round ${state.round + 1} · ${state.scannedRound} of ${total} markets`);
+        `Round ${state.round + 1} · ${Math.min(state.scannedRound, total)} of ${total} markets`);
       if (done % 10 === 0) { rebuildSignals(); renderSignals(); }
     }
   };
@@ -716,15 +716,13 @@ async function scanSlice() {
 
 async function runRounds() {
   const gen = ++state.gen;
-  const startRound = state.round;
-  while (state.round === startRound) {
+  while (!state.done) {
     if (state.gen !== gen || !state.markets.length) return;
     if (state.reporting) { await sleep(400); continue; }
     if (state.busy) { await sleep(300); continue; }
     await scanSlice();
   }
   if (state.gen !== gen) return;
-  state.done = true;
   saveCache();
   paintStatus("Saved", "live");
   setProgress(1, `All ${state.total} markets checked · ${state.signals.length} signals saved`);
@@ -1349,7 +1347,7 @@ $("copyReport").onclick = async () => {
   catch { window.prompt("Copy the report:", txt); }
 };
 
-window.__radar = { state, candles, historyCandles, coinSignals, toPair, analyze, settle, scanSlice, loadUniverse, saveCache, drawings };
+window.__radar = { state, candles, historyCandles, coinSignals, toPair, analyze, settle, scanSlice, loadUniverse, saveCache, runRounds, drawings };
 
 (async function boot() {
   initChart();
