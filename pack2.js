@@ -11,6 +11,9 @@ const $2 = id => document.getElementById(id);
 const N2 = v => (Number.isFinite(v) ? v.toLocaleString("en-US", { maximumFractionDigits: 2 }) : "—");
 const P2 = v => (Number.isFinite(v) ? `${v > 0 ? "+" : ""}${v.toFixed(2)}%` : "—");
 const tp2 = s => ((s.tp / s.entry) - 1) * 100;
+const px2 = v => (!Number.isFinite(v) || v <= 0 ? "—" : v >= 1
+  ? v.toLocaleString("en-US", { maximumFractionDigits: 2 })
+  : v.toPrecision(4));
 
 /* ---------------- chart first ---------------- */
 (function chartFirst() {
@@ -124,7 +127,7 @@ const CSS2 = `
   .mkt-bar{display:flex;flex-wrap:wrap;gap:7px;align-items:center;margin:8px 0 10px}
   .mkt-bar .input{height:34px;flex:1 1 150px;max-width:260px}
   .mkt-stats{font-size:11px;color:var(--muted);margin:2px 0 8px}
-  .mkt-head,.mkt-row{display:grid;grid-template-columns:46px minmax(88px,1fr) 90px 66px 96px 62px;gap:6px;align-items:center}
+  .mkt-head,.mkt-row{display:grid;grid-template-columns:44px minmax(84px,1fr) 84px 62px 92px 58px 22px;gap:6px;align-items:center}
   .mkt-head{font-size:9.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:800;
     padding:6px 8px;border-bottom:1px solid var(--line);position:sticky;top:0;background:rgba(12,15,19,.98);z-index:2}
   .mkt-head button{border:0;background:transparent;color:inherit;font:inherit;text-align:left;padding:0}
@@ -149,8 +152,8 @@ const CSS2 = `
   .mkt-seg button{border:0;background:transparent;color:var(--muted);font-size:11px;font-weight:700;padding:4px 8px;border-radius:7px}
   .mkt-seg button.on{background:linear-gradient(135deg,#e2ff7a,#a3e635);color:#0a0f02}
   @media (max-width:600px){
-    .mkt-head,.mkt-row{grid-template-columns:34px minmax(74px,1fr) 76px 58px 44px}
-    .mkt-head span[data-c="vol"],.mkt-row .vol{display:none}
+    .mkt-head,.mkt-row{grid-template-columns:30px minmax(64px,1fr) 70px 56px 52px 20px}
+    .mkt-head button[data-c="vol"],.mkt-row .vol{display:none}
   }
 `;
 (function () { const s = document.createElement("style"); s.textContent = CSS2; document.head.appendChild(s); })();
@@ -242,7 +245,7 @@ function renderList() {
       return `<div class="mkt-row" data-sym="${r.symbol}">
         <span class="rk">${r.rank ? "#" + r.rank : "—"}</span>
         <span class="sy"><span>${r.symbol}</span>${badge}</span>
-        <span>${r.price ? N2(r.price) : "—"}</span>
+        <span>${px2(r.price)}</span>
         <span>${chg}</span>
         <span class="vol">${r.volume ? "$" + N2(r.volume) : "—"}</span>
         <span>${s ? P2(tp2(s)) : "—"}</span>
