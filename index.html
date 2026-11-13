@@ -470,9 +470,10 @@
 (function () {
   var L = window.LightweightCharts;
   if (!L) return;
-  var orig = L.createChart;
-  L.createChart = function () {
-    var c = orig.apply(this, arguments);
+  var C = Object.assign({}, L);
+  var origChart = L.createChart, origMarkers = L.createSeriesMarkers;
+  C.createChart = function () {
+    var c = origChart.apply(L, arguments);
     window.__chart = c;
     window.__bandSeries = [];
     var add = c.addSeries.bind(c);
@@ -484,12 +485,12 @@
     };
     return c;
   };
-  var mkm = L.createSeriesMarkers;
-  L.createSeriesMarkers = function (series, markers) {
-    var api = mkm(series, markers);
+  C.createSeriesMarkers = function (series, markers) {
+    var api = origMarkers.call(L, series, markers);
     window.__markersApi = api;
     return api;
   };
+  window.LightweightCharts = C;
 })();
 </script>
 <script type="module" src="app.js?v=12"></script>
