@@ -466,6 +466,33 @@
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/lightweight-charts@5/dist/lightweight-charts.standalone.production.js"></script>
+<script>
+(function () {
+  var L = window.LightweightCharts;
+  if (!L) return;
+  var orig = L.createChart;
+  L.createChart = function () {
+    var c = orig.apply(this, arguments);
+    window.__chart = c;
+    window.__bandSeries = [];
+    var add = c.addSeries.bind(c);
+    c.addSeries = function (type, opts) {
+      var s = add(type, opts);
+      if (type === L.CandlestickSeries) window.__candleSeries = s;
+      else if (window.__candleSeries && window.__bandSeries.length < 3) window.__bandSeries.push(s);
+      return s;
+    };
+    return c;
+  };
+  var mkm = L.createSeriesMarkers;
+  L.createSeriesMarkers = function (series, markers) {
+    var api = mkm(series, markers);
+    window.__markersApi = api;
+    return api;
+  };
+})();
+</script>
 <script type="module" src="app.js?v=12"></script>
+<script type="module" src="pack.js?v=1"></script>
 </body>
 </html>
